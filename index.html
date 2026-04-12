@@ -44,9 +44,10 @@ button { background:green; color:white; font-weight:bold; cursor:pointer; }
 
 <h1>💰 J.B Préstamos</h1>
 
-<h3>💵 Ganancia: $<span id="gananciaTotal">0</span></h3>
-<h3>📊 Prestado: $<span id="totalPrestado">0</span></h3>
+<h3>💵 Ganancia total: $<span id="gananciaTotal">0</span></h3>
+<h3>📊 Total prestado: $<span id="totalPrestado">0</span></h3>
 <h3>⚠️ Pendientes: <span id="pendientes">0</span></h3>
+<h3>📅 Hoy ganaste: $<span id="hoy">0</span></h3>
 
 <input id="nombre" placeholder="Nombre">
 <input id="monto" placeholder="Monto">
@@ -54,6 +55,8 @@ button { background:green; color:white; font-weight:bold; cursor:pointer; }
 <input id="dias" placeholder="Días para pagar">
 
 <button onclick="guardar()">Guardar</button>
+<button onclick="verVencidos()">Ver vencidos</button>
+<button onclick="cargar()">Ver todos</button>
 
 <h2>📋 Lista</h2>
 <div id="lista"></div>
@@ -106,38 +109,34 @@ async function guardar(){
   let fechaPago = new Date();
   fechaPago.setDate(fecha.getDate() + dias);
 
-  try {
-    await db.collection("prestamos").add({
-      nombre,
-      monto,
-      interes,
-      total,
-      fecha: fecha.toISOString(),
-      fechaPago: fechaPago.toISOString(),
-      estado: "pendiente"
-    });
+  await db.collection("prestamos").add({
+    nombre,
+    monto,
+    interes,
+    total,
+    fecha: fecha.toISOString(),
+    fechaPago: fechaPago.toISOString(),
+    estado: "pendiente"
+  });
 
-    alert("Guardado ✔️");
+  alert("Guardado ✔️");
 
-    // limpiar
-    document.getElementById("nombre").value = "";
-    document.getElementById("monto").value = "";
-    document.getElementById("interes").value = "";
-    document.getElementById("dias").value = "";
+  document.getElementById("nombre").value = "";
+  document.getElementById("monto").value = "";
+  document.getElementById("interes").value = "";
+  document.getElementById("dias").value = "";
 
-    cargar();
-
-  } catch (error) {
-    alert("Error: " + error.message);
-    console.log(error);
-  }
+  cargar();
 }
 
-// 📋 CARGAR
+// 📋 CARGAR TODO
 async function cargar(){
   let datos = await db.collection("prestamos").get();
 
   let totalGanancia=0, totalPrestado=0, pendientes=0;
+  let gananciaHoy=0;
+  let hoy = new Date().toDateString();
+
   let lista = document.getElementById("lista");
   lista.innerHTML="";
 
@@ -148,9 +147,13 @@ async function cargar(){
     totalGanancia += ganancia;
     totalPrestado += d.monto;
 
-    let hoy = new Date();
+    let fecha = new Date(d.fecha).toDateString();
+    if(fecha === hoy){
+      gananciaHoy += ganancia;
+    }
+
     let pago = new Date(d.fechaPago);
-    let vencido = hoy > pago;
+    let vencido = new Date() > pago;
 
     if(d.estado==="pendiente") pendientes++;
 
@@ -161,7 +164,7 @@ async function cargar(){
         📈 ${d.interes}%<br>
         💰 $${d.total}<br>
         📅 Pago: ${pago.toLocaleDateString()}<br>
-        ${vencido ? '<span class="alerta">⚠️ VENCIDO</span><br>' : ''}
+        ${vencido && d.estado==="pendiente" ? '<span class="alerta">⚠️ VENCIDO</span><br>' : ''}
         <button onclick="pagar('${doc.id}')">Pagar</button>
         <button class="delete" onclick="eliminar('${doc.id}')">Eliminar</button>
       </div>
@@ -171,6 +174,31 @@ async function cargar(){
   document.getElementById("gananciaTotal").innerText = totalGanancia;
   document.getElementById("totalPrestado").innerText = totalPrestado;
   document.getElementById("pendientes").innerText = pendientes;
+  document.getElementById("hoy").innerText = gananciaHoy;
+}
+
+// ⚠️ SOLO VENCIDOS
+async function verVencidos(){
+  let datos = await db.collection("prestamos").get();
+  let lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  let hoy = new Date();
+
+  datos.forEach(doc=>{
+    let d = doc.data();
+    let pago = new Date(d.fechaPago);
+
+    if(hoy > pago && d.estado === "pendiente"){
+      lista.innerHTML += `
+        <div class="card">
+          👤 ${d.nombre}<br>
+          💰 $${d.total}<br>
+          ⚠️ VENCIDO
+        </div>
+      `;
+    }
+  });
 }
 
 // ✅ PAGAR
