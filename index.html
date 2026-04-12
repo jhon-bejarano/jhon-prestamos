@@ -132,7 +132,7 @@
 </div>
 
 <script>
-  alert("SCRIPT CARGADO");
+  alert("SCRIPT CARGANDO");
 
   const firebaseConfig = {
     apiKey: "AIzaSyDTbYaRdsgsRHxIw1Z1c4lTVIKE1Yv4_xQ",
@@ -146,9 +146,8 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // 🔥 ESPERAR DIRECTO SIN DOMCONTENTLOADED
-  setTimeout(() => {
-
+  // 🔥 FORZAR EJECUCIÓN CUANDO TODO YA EXISTE
+  function iniciar() {
     const btn = document.getElementById("btnGuardar");
 
     if (!btn) {
@@ -174,7 +173,24 @@
         alert("ERROR: " + e.message);
       }
     };
+  }
 
-  }, 1000); // 👈 espera 1 segundo
+  // 🔥 INTENTAR VARIAS VECES (CLAVE PARA GITHUB PAGES)
+  let intentos = 0;
+  let intervalo = setInterval(() => {
+    intentos++;
 
+    const btn = document.getElementById("btnGuardar");
+
+    if (btn) {
+      clearInterval(intervalo);
+      iniciar();
+    }
+
+    if (intentos > 10) {
+      clearInterval(intervalo);
+      alert("NO SE ENCONTRÓ EL BOTÓN");
+    }
+
+  }, 300);
 </script>
