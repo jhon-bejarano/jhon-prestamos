@@ -2,48 +2,113 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<title>Login</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+}
+
+.container{
+  max-width:400px;
+  margin:auto;
+  padding:30px;
+}
+
+.card{
+  background:#1e293b;
+  padding:20px;
+  border-radius:10px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border:none;
+  border-radius:8px;
+  background:#020617;
+  color:white;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:8px;
+  background:#3b82f6;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+</style>
 
 </head>
 
 <body>
 
-<h2>Login</h2>
+<div class="container">
+  <div class="card">
 
-<input id="email" placeholder="Correo">
-<input id="password" type="password" placeholder="Contraseña">
+    <h2>🔐 Login</h2>
 
-<button onclick="login()">Entrar</button>
+    <input id="email" placeholder="Correo">
+    <input id="password" type="password" placeholder="Contraseña">
+
+    <button onclick="login()">Entrar</button>
+
+  </div>
+</div>
 
 <script>
 
+// 🔥 CONFIG REAL
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+// 🔥 INICIALIZAR
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
 const auth = firebase.auth();
 
+// 🔵 LOGIN CORREGIDO
 async function login(){
-  let email = email.value;
-  let password = password.value;
+
+  let email = document.getElementById("email").value;
+  let password = document.getElementById("password").value;
+
+  if(!email || !password){
+    alert("Completa todos los campos");
+    return;
+  }
 
   try{
+
     let user = await auth.signInWithEmailAndPassword(email,password);
 
+    // 🔥 ADMIN
     if(user.user.email === "bjhon1994@gmail.com"){
-      window.location.href="admin.html";
-    }else{
-      window.location.href="cliente.html";
+      window.location.href = "admin.html";
+    } 
+    // 👤 CLIENTE
+    else{
+      window.location.href = "cliente.html";
     }
 
   }catch(e){
-    alert(e.message);
+    alert("Error: " + e.message);
   }
 }
 
