@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Registro Cliente - J.B Capital</title>
+<title>Registro Cliente</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -17,7 +17,7 @@ body{
 }
 
 .container{
-  max-width:420px;
+  max-width:400px;
   margin:auto;
   padding:25px;
 }
@@ -49,39 +49,29 @@ button{
   font-weight:bold;
   cursor:pointer;
 }
-
-button:hover{
-  background:#16a34a;
-}
-
-h2{
-  text-align:center;
-}
 </style>
 </head>
 
 <body>
 
 <div class="container">
-
 <div class="card">
 
 <h2>🟢 Registro Cliente</h2>
 
-<input id="nombre" placeholder="Nombre completo">
+<input id="nombre" placeholder="Nombre">
 <input id="telefono" placeholder="Teléfono">
-<input id="email" placeholder="Correo electrónico">
+<input id="email" placeholder="Correo">
 <input id="password" type="password" placeholder="Contraseña">
 
 <button onclick="registrar()">Crear cuenta</button>
 
 </div>
-
 </div>
 
 <script>
 
-// 🔥 FIREBASE CONFIG (usa el mismo de tu proyecto)
+// 🔥 CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
@@ -93,9 +83,10 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-
-// 🟢 FUNCIÓN REGISTRO
+// ✅ FUNCIÓN COMPLETA
 async function registrar(){
+
+  console.log("CLICK OK");
 
   let nombre = document.getElementById("nombre").value;
   let telefono = document.getElementById("telefono").value;
@@ -109,23 +100,38 @@ async function registrar(){
 
   try {
 
-    // 1. CREAR USUARIO EN AUTH
-    let userCredential = await auth.createUserWithEmailAndPassword(email, password);
+    // 🔐 crear usuario
+    let user = await auth.createUserWithEmailAndPassword(email, password);
 
-    let uid = userCredential.user.uid;
+    let uid = user.user.uid;
 
-    // 2. GUARDAR CLIENTE EN FIRESTORE
+    // 💾 guardar en Firestore
     await db.collection("clientes").doc(uid).set({
-      uid: uid,
-      nombre: nombre,
-      telefono: telefono,
-      email: email,
-      fechaRegistro: new Date().toISOString()
+      uid,
+      nombre,
+      telefono,
+      email,
+      fecha: new Date().toISOString()
     });
 
-    alert("Cuenta creada correctamente ✔️");
+    alert("Cuenta creada ✔️");
 
-    // 3. REDIRIGIR AL CLIENTE
-    window.location.href = "cliente.html";
+    window.location.href = "login.html";
 
-  } catch (error
+  } catch(error){
+
+    console.log(error);
+
+    if(error.code === "auth/email-already-in-use"){
+      alert("Este correo ya existe");
+    } else {
+      alert(error.message);
+    }
+
+  }
+}
+
+</script>
+
+</body>
+</html>
