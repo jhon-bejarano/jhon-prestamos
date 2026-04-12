@@ -50,6 +50,10 @@ button{
 .logout{
   background:#ef4444;
 }
+.alerta{
+  color:#f87171;
+  font-weight:bold;
+}
 </style>
 
 </head>
@@ -61,12 +65,18 @@ button{
 <h2>💰 Cliente</h2>
 <p id="user"></p>
 
+<!-- CUPO -->
+<div class="card">
+<h3>💳 Cupo disponible: $100000</h3>
+</div>
+
 <!-- SOLICITAR -->
 <div class="card">
 <h3>Solicitar préstamo</h3>
 
 <input id="monto" placeholder="Monto">
 <input id="cuotas" placeholder="Cuotas">
+<input id="dias" placeholder="Días">
 
 <button class="btn" onclick="solicitar()">Solicitar</button>
 </div>
@@ -83,14 +93,12 @@ button{
 
 <script>
 
-// 🔥 CONFIG REAL
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-// 🔥 INICIALIZAR
 if (!firebase.apps.length) {
   firebase.initializeApp(firebaseConfig);
 }
@@ -132,11 +140,18 @@ async function cargarPrestamos(uid){
   datos.forEach(doc=>{
     let d = doc.data();
 
+    let hoy = new Date();
+    let vencido = hoy > new Date(d.fechaVencimiento);
+
     lista.innerHTML += `
       <div class="card">
         💵 $${d.monto}<br>
         📊 Estado: ${d.estado}<br>
-        🧾 Cuotas: ${d.pagadas || 0}/${d.cuotas}
+        📆 Días: ${d.dias}<br>
+        📅 Solicitud: ${new Date(d.fecha).toLocaleDateString()}<br>
+        ⏳ Vence: ${new Date(d.fechaVencimiento).toLocaleDateString()}<br>
+        🧾 Cuotas: ${d.pagadas || 0}/${d.cuotas}<br>
+        ${vencido && d.estado==="pendiente" ? '<span class="alerta">⚠️ VENCIDO</span>' : ''}
       </div>
     `;
   });
@@ -147,23 +162,36 @@ async function solicitar(){
 
   let user = auth.currentUser;
 
-  let monto = document.getElementById("monto").value;
-  let cuotas = document.getElementById("cuotas").value;
+  let monto = parseFloat(document.getElementById("monto").value);
+  let cuotas = parseInt(document.getElementById("cuotas").value);
+  let dias = parseInt(document.getElementById("dias").value);
 
-  if(!monto || !cuotas){
-    alert("Completa los datos");
+  if(!monto || !cuotas || !dias){
+    alert("Completa todos los datos");
     return;
   }
+
+  // 🚨 VALIDACIÓN DE CUPO
+  if(monto > 100000){
+    alert("❌ No puedes solicitar más de $100000");
+    return;
+  }
+
+  let hoy = new Date();
+  let vencimiento = new Date();
+  vencimiento.setDate(hoy.getDate() + dias);
 
   try{
 
     await db.collection("prestamos").add({
       userId: user.uid,
-      monto: parseFloat(monto),
-      cuotas: parseInt(cuotas),
+      monto: monto,
+      cuotas: cuotas,
+      dias: dias,
       pagadas: 0,
       estado: "pendiente",
-      fecha: new Date().toISOString()
+      fecha: hoy.toISOString(),
+      fechaVencimiento: vencimiento.toISOString()
     });
 
     alert("Solicitud enviada ✔️");
