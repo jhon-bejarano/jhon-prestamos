@@ -10,92 +10,100 @@
 
 <style>
 body{
-  margin:0;
   font-family:Arial;
   background:#0f172a;
   color:white;
+  display:flex;
+  justify-content:center;
 }
-
-.container{
-  max-width:400px;
-  margin:auto;
-  padding:30px;
-}
-
 .card{
   background:#1e293b;
   padding:20px;
   border-radius:10px;
+  margin-top:20px;
+  width:300px;
 }
-
 input{
   width:100%;
-  padding:12px;
-  margin:6px 0;
+  padding:10px;
+  margin:5px 0;
   border:none;
-  border-radius:8px;
-  background:#020617;
-  color:white;
+  border-radius:5px;
 }
-
 button{
   width:100%;
-  padding:12px;
-  margin-top:10px;
-  border:none;
-  border-radius:8px;
+  padding:10px;
   background:#22c55e;
+  border:none;
+  border-radius:5px;
   color:white;
   font-weight:bold;
-  cursor:pointer;
 }
 </style>
-
 </head>
 
 <body>
 
-<div class="container">
-  <div class="card">
+<div class="card">
 
-    <h2>🟢 Registro Cliente</h2>
+<h2>🟢 Registro Cliente</h2>
 
-    <input id="nombre" placeholder="Nombre completo">
-    <input id="telefono" placeholder="Teléfono">
-    <input id="email" placeholder="Correo">
-    <input id="password" type="password" placeholder="Contraseña">
+<input id="nombre" placeholder="Nombre completo">
+<input id="telefono" placeholder="Teléfono">
 
-    <button onclick="registrar()">Crear cuenta</button>
+<input id="cedula" placeholder="Cédula">
+<label>Fecha nacimiento</label>
+<input type="date" id="nacimiento">
 
-  </div>
+<label>Fecha expedición documento</label>
+<input type="date" id="expedicion">
+
+<h4>Referencia 1</h4>
+<input id="ref1nombre" placeholder="Nombre referencia 1">
+<input id="ref1tel" placeholder="Teléfono referencia 1">
+
+<h4>Referencia 2</h4>
+<input id="ref2nombre" placeholder="Nombre referencia 2">
+<input id="ref2tel" placeholder="Teléfono referencia 2">
+
+<input id="email" placeholder="Correo">
+<input id="password" type="password" placeholder="Contraseña">
+
+<button onclick="registrar()">Crear cuenta</button>
+
 </div>
 
 <script>
 
-// 🔥 CONFIG REAL
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-// 🔥 INICIALIZAR
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// 🟢 REGISTRAR
 async function registrar(){
 
-  let nombre = document.getElementById("nombre").value;
-  let telefono = document.getElementById("telefono").value;
-  let email = document.getElementById("email").value;
-  let password = document.getElementById("password").value;
+  let nombre = nombreInput("nombre");
+  let telefono = nombreInput("telefono");
+  let cedula = nombreInput("cedula");
+  let nacimiento = nombreInput("nacimiento");
+  let expedicion = nombreInput("expedicion");
 
-  if(!nombre || !telefono || !email || !password){
+  let ref1nombre = nombreInput("ref1nombre");
+  let ref1tel = nombreInput("ref1tel");
+
+  let ref2nombre = nombreInput("ref2nombre");
+  let ref2tel = nombreInput("ref2tel");
+
+  let email = nombreInput("email");
+  let password = nombreInput("password");
+
+  if(!nombre || !telefono || !cedula || !email || !password){
     alert("Completa todos los campos");
     return;
   }
@@ -105,20 +113,30 @@ async function registrar(){
     let user = await auth.createUserWithEmailAndPassword(email,password);
 
     await db.collection("clientes").doc(user.user.uid).set({
-      uid: user.user.uid,
-      nombre: nombre,
-      telefono: telefono,
-      email: email,
-      fecha: new Date().toISOString()
+      nombre,
+      telefono,
+      cedula,
+      nacimiento,
+      expedicion,
+      email,
+      cupo:100000,
+
+      referencias:[
+        {nombre:ref1nombre, telefono:ref1tel},
+        {nombre:ref2nombre, telefono:ref2tel}
+      ]
     });
 
-    alert("Cuenta creada correctamente ✔️");
-
-    window.location.href = "login.html";
+    alert("Cuenta creada");
+    window.location.href="login.html";
 
   }catch(e){
-    alert("Error: " + e.message);
+    alert(e.message);
   }
+}
+
+function nombreInput(id){
+  return document.getElementById(id).value;
 }
 
 </script>
