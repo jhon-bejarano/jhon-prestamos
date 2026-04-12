@@ -2,89 +2,184 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<title>Cliente</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
-body{background:#0f172a;color:white;font-family:Arial;padding:20px;}
-.card{background:#1e293b;padding:15px;margin-top:10px;border-radius:10px;}
-button{margin-top:5px;padding:10px;width:100%;}
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+}
+.container{
+  max-width:500px;
+  margin:auto;
+  padding:20px;
+}
+.card{
+  background:#1e293b;
+  padding:15px;
+  border-radius:10px;
+  margin-top:10px;
+}
+input{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border:none;
+  border-radius:8px;
+  background:#020617;
+  color:white;
+}
+button{
+  width:100%;
+  padding:12px;
+  margin-top:8px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+.btn{
+  background:#22c55e;
+}
+.logout{
+  background:#ef4444;
+}
 </style>
 
 </head>
 
 <body>
 
+<div class="container">
+
 <h2>💰 Cliente</h2>
 <p id="user"></p>
 
+<!-- SOLICITAR -->
+<div class="card">
 <h3>Solicitar préstamo</h3>
+
 <input id="monto" placeholder="Monto">
 <input id="cuotas" placeholder="Cuotas">
-<button onclick="solicitar()">Solicitar</button>
 
+<button class="btn" onclick="solicitar()">Solicitar</button>
+</div>
+
+<!-- LISTA -->
+<div class="card">
 <h3>Mis préstamos</h3>
 <div id="lista"></div>
+</div>
 
-<button onclick="logout()">Cerrar sesión</button>
+<button class="logout" onclick="logout()">Cerrar sesión</button>
+
+</div>
 
 <script>
 
+// 🔥 CONFIG REAL
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+// 🔥 INICIALIZAR
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-auth.onAuthStateChanged(async user=>{
-  if(!user) return location.href="login.html";
+let lista = document.getElementById("lista");
 
-  user = user;
+// 🔐 VALIDAR USUARIO
+auth.onAuthStateChanged(async (user)=>{
+
+  if(!user){
+    window.location.href = "login.html";
+    return;
+  }
+
   document.getElementById("user").innerText = user.email;
 
-  let datos = await db.collection("prestamos")
-    .where("userId","==",user.uid).get();
+  cargarPrestamos(user.uid);
+});
 
-  let lista = document.getElementById("lista");
-  lista.innerHTML="";
+// 📊 CARGAR PRÉSTAMOS
+async function cargarPrestamos(uid){
+
+  lista.innerHTML = "Cargando...";
+
+  let datos = await db.collection("prestamos")
+    .where("userId","==",uid)
+    .get();
+
+  lista.innerHTML = "";
+
+  if(datos.empty){
+    lista.innerHTML = "<p>No tienes préstamos</p>";
+    return;
+  }
 
   datos.forEach(doc=>{
     let d = doc.data();
+
     lista.innerHTML += `
       <div class="card">
-        $${d.monto} | ${d.estado}
+        💵 $${d.monto}<br>
+        📊 Estado: ${d.estado}<br>
+        🧾 Cuotas: ${d.pagadas || 0}/${d.cuotas}
       </div>
     `;
   });
-});
-
-async function solicitar(){
-  let user = auth.currentUser;
-
-  let monto = monto.value;
-  let cuotas = cuotas.value;
-
-  await db.collection("prestamos").add({
-    userId:user.uid,
-    monto:parseFloat(monto),
-    cuotas:parseInt(cuotas),
-    estado:"pendiente"
-  });
-
-  alert("Solicitud enviada");
-  location.reload();
 }
 
+// 🟢 SOLICITAR PRÉSTAMO
+async function solicitar(){
+
+  let user = auth.currentUser;
+
+  let monto = document.getElementById("monto").value;
+  let cuotas = document.getElementById("cuotas").value;
+
+  if(!monto || !cuotas){
+    alert("Completa los datos");
+    return;
+  }
+
+  try{
+
+    await db.collection("prestamos").add({
+      userId: user.uid,
+      monto: parseFloat(monto),
+      cuotas: parseInt(cuotas),
+      pagadas: 0,
+      estado: "pendiente",
+      fecha: new Date().toISOString()
+    });
+
+    alert("Solicitud enviada ✔️");
+
+    cargarPrestamos(user.uid);
+
+  }catch(e){
+    alert("Error: " + e.message);
+  }
+}
+
+// 🚪 LOGOUT
 function logout(){
-  auth.signOut();
-  location.href="login.html";
+  auth.signOut().then(()=>{
+    window.location.href = "login.html";
+  });
 }
 
 </script>
