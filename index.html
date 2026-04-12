@@ -90,14 +90,18 @@
     let nombre = document.getElementById("nombre").value;
     let monto = document.getElementById("monto").value;
 
-    await db.collection("prestamos").add({
-      nombre,
-      monto
-    });
+    try {
+  await db.collection("prestamos").add({
+    nombre,
+    monto
+  });
 
-    alert("GUARDADO ✔️");
-    cargar();
-  };
+  alert("GUARDADO REAL ✔️");
+
+} catch (error) {
+  alert("ERROR FIREBASE: " + error.message);
+  console.log(error);
+}
 
   // 🔥 CARGAR
   async function cargar() {
