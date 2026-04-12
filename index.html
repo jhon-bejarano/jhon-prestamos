@@ -27,13 +27,14 @@ button{padding:10px;background:#22c55e;color:white;}
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyXXXXX...", ✅
+  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
 async function cargar(){
   let d=await db.collection("clientes").get();
