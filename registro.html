@@ -10,58 +10,97 @@
 
 <style>
 
+/* 🔥 FONDO */
 body{
   margin:0;
   font-family:Arial, sans-serif;
   background: url("fondo.jpg") no-repeat center center fixed;
   background-size: cover;
-  color: white;
-}
-
-body::before{
-  content:"";
-  position:fixed;
-  top:0;
-  left:0;
-  width:100%;
-  height:100%;
-  background: rgba(0,0,0,0.65);
-  z-index:-1;
-}
-
-.app, .container{
-  max-width:400px;
-  margin:auto;
-  padding:20px;
-}
-
-.card{
-  background: rgba(15,23,42,0.85);
-  backdrop-filter: blur(12px);
-  border-radius:15px;
-  padding:20px;
-  margin-top:20px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.6);
-}
-
-input{
-  width:100%;
-  padding:12px;
-  margin:8px 0;
-  border:none;
-  border-radius:8px;
-  background:#020617;
   color:white;
 }
 
+/* 🔥 CAPA OSCURA */
+body::before{
+  content:"";
+  position:fixed;
+  width:100%;
+  height:100%;
+  background: rgba(0,0,0,0.7);
+  z-index:-1;
+}
+
+/* 🔥 CONTENEDOR CENTRADO */
+.app{
+  max-width:400px;
+  margin:auto;
+  padding:20px;
+  margin-top:50px;
+}
+
+/* 🔥 TARJETA PRO */
+.card{
+  background: rgba(15,23,42,0.9);
+  border-radius:20px;
+  padding:25px;
+  box-shadow:0 15px 40px rgba(0,0,0,0.7);
+}
+
+/* 🔥 INPUTS BONITOS */
+input{
+  width:100%;
+  padding:14px;
+  margin:8px 0;
+  border:none;
+  border-radius:10px;
+  background:rgba(255,255,255,0.08);
+  color:white;
+  font-size:14px;
+}
+
+input::placeholder{
+  color:#94a3b8;
+}
+
+/* 🔥 BOTONES PRO */
 button{
   width:100%;
-  padding:12px;
+  padding:14px;
   margin-top:10px;
   border:none;
-  border-radius:8px;
+  border-radius:10px;
   font-weight:bold;
+  font-size:14px;
   cursor:pointer;
+  transition:0.3s;
+}
+
+/* BOTÓN AZUL */
+.btn-secondary{
+  background:#3b82f6;
+}
+.btn-secondary:hover{
+  background:#2563eb;
+}
+
+/* BOTÓN VERDE */
+.btn-primary{
+  background:#22c55e;
+}
+.btn-primary:hover{
+  background:#16a34a;
+}
+
+/* 🔥 TÍTULO */
+h2{
+  text-align:center;
+  margin-bottom:20px;
+}
+
+/* 🔥 OTP INPUT */
+#codigo{
+  text-align:center;
+  letter-spacing:5px;
+  font-size:18px;
 }
 
 </style>
