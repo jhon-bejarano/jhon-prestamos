@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Admin - J.B Capital</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+}
+.app{
+  max-width:500px;
+  margin:auto;
+  padding:20px;
+}
+.card{
+  background:#1e293b;
+  padding:15px;
+  border-radius:10px;
+  margin-top:10px;
+}
+button{
+  width:100%;
+  padding:10px;
+  margin-top:5px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+.green{background:#22c55e;}
+.blue{background:#3b82f6;}
+.orange{background:#f59e0b;}
+.red{background:#ef4444;}
+.alerta{color:#f87171;font-weight:bold;}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<h2>💼 Admin - J.B Capital</h2>
+
+<div class="card">
+💰 Ganancia: <span id="ganancia">0</span><br>
+💵 Prestado: <span id="prestado">0</span><br>
+📊 Pendientes: <span id="pendientes">0</span>
+</div>
+
+<button class="blue" onclick="cargar()">Ver todos</button>
+<button class="orange" onclick="verVencidos()">Vencidos</button>
+
+<div id="lista"></div>
+
+</div>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
+  authDomain: "jb-prestamos.firebaseapp.com",
+  projectId: "jb-prestamos"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+// 💰 FORMATO
+function cop(n){
+  return "COP $" + n.toLocaleString("es-CO");
+}
+
+// 🔄 CARGAR TODO
+async function cargar(){
+
+  let datos = await db.collection("prestamos").get();
+
+  let g=0, p=0, pen=0;
+  lista.innerHTML="";
+
+  datos.forEach(doc=>{
+    let d = doc.data();
+
+    g += d.interes + (d.recargo||0);
+    p += d.monto;
+    if(d.estado==="pendiente") pen++;
+
+    let vencido = new Date() > new Date(d.fechaVencimiento);
+
+    lista.innerHTML += `
+    <div class="card">
+      💵 ${cop(d.monto)}<br>
+      💰 ${cop(d.total)}<br>
+      📊 ${d.estado}<br>
+      📆 ${d.dias} días<br>
+      ${vencido && d.estado==="pendiente" ? '<span class="alerta">⚠️ VENCIDO</span><br>' : ''}
+
+      <a href="https://wa.me/?text=Debes ${cop(d.total)}" target="_blank">
+        <button class="blue">Cobrar</button>
+      </a>
+
+      <button class="green" onclick="pagado('${doc.id}')">Pagado</button>
+      <button class="red" onclick="eliminar('${doc.id}')">Eliminar</button>
+    </div>`;
+  });
+
+  ganancia.innerText = cop(g);
+  prestado.innerText = cop(p);
+  pendientes.innerText = pen;
+}
+
+// ⚠️ VENCIDOS
+async function verVencidos(){
+
+  let datos = await db.collection("prestamos").get();
+  lista.innerHTML="";
+
+  datos.forEach(doc=>{
+    let d = doc.data();
+
+    if(new Date()>new Date(d.fechaVencimiento) && d.estado==="pendiente"){
+      lista.innerHTML+=`
+      <div class="card alerta">
+        ⚠️ ${cop(d.total)} vencido
+      </div>`;
+    }
+  });
+}
+
+// ✅ PAGADO
+async function pagado(id){
+  await db.collection("prestamos").doc(id).update({
+    estado:"pagado"
+  });
+  cargar();
+}
+
+// ❌ ELIMINAR
+async function eliminar(id){
+  await db.collection("prestamos").doc(id).delete();
+  cargar();
+}
+
+</script>
+
+</body>
+</html>
