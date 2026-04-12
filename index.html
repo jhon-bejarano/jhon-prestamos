@@ -132,42 +132,42 @@
 </div>
 
 <script>
-  // CONFIG FIREBASE
+  // 🔥 PRUEBA 1: confirmar que el script carga
+  alert("SCRIPT CARGADO");
+
   const firebaseConfig = {
-    apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
-    authDomain: "jb-prestamos.firebaseapp.com",
-    projectId: "jb-prestamos",
-    storageBucket: "jb-prestamos.appspot.com",
-    messagingSenderId: "45452353450",
-    appId: "1:45452353450:web:caaca5cf8ecf494043d5d3"
+    apiKey: "AIzaSyDTbYaRdsgsRHxIw1Z1c4lTVIKE1Yv4_xQ",
+    authDomain: "jb-prestamos-5fc43.firebaseapp.com",
+    projectId: "jb-prestamos-5fc43",
+    storageBucket: "jb-prestamos-5fc43.appspot.com",
+    messagingSenderId: "187902145563",
+    appId: "1:187902145563:web:42d27d862d0e63f18774be"
   };
 
-  // INIT
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // GUARDAR
-  async function guardar() {
+  // 🔥 BOTÓN
+  document.getElementById("btnGuardar").addEventListener("click", async () => {
+    alert("CLICK DETECTADO");
+
     let nombre = document.getElementById("nombre").value;
     let monto = document.getElementById("monto").value;
 
-    if (!nombre || !monto) {
-      alert("Completa los campos");
-      return;
+    try {
+      await db.collection("prestamos").add({
+        nombre,
+        monto
+      });
+
+      alert("GUARDADO EN FIREBASE ✔️");
+      cargar();
+
+    } catch (e) {
+      alert("ERROR: " + e.message);
     }
+  });
 
-    await db.collection("prestamos").add({
-      nombre,
-      monto
-    });
-
-    document.getElementById("nombre").value = "";
-    document.getElementById("monto").value = "";
-
-    cargar();
-  }
-
-  // CARGAR
   async function cargar() {
     let lista = document.getElementById("lista");
     lista.innerHTML = "";
@@ -180,7 +180,7 @@
       lista.innerHTML += `
         <div class="card">
           👤 ${d.nombre} <br>
-          💵 $${d.monto}
+          💵 ${d.monto}
         </div>
       `;
     });
@@ -188,7 +188,3 @@
 
   cargar();
 </script>
-
-</body>
-</html>
-document.getElementById("btnGuardar").addEventListener("click", guardar);
