@@ -10,6 +10,7 @@
 
 <style>
 body{
+  margin:0;
   font-family:Arial;
   background:#0f172a;
   color:white;
@@ -21,23 +22,27 @@ body{
   padding:20px;
   border-radius:10px;
   margin-top:20px;
-  width:300px;
+  width:320px;
 }
 input{
   width:100%;
   padding:10px;
   margin:5px 0;
   border:none;
-  border-radius:5px;
+  border-radius:6px;
 }
 button{
   width:100%;
   padding:10px;
   background:#22c55e;
   border:none;
-  border-radius:5px;
+  border-radius:6px;
   color:white;
   font-weight:bold;
+  cursor:pointer;
+}
+h4{
+  margin-top:10px;
 }
 </style>
 </head>
@@ -52,6 +57,7 @@ button{
 <input id="telefono" placeholder="Teléfono">
 
 <input id="cedula" placeholder="Cédula">
+
 <label>Fecha nacimiento</label>
 <input type="date" id="nacimiento">
 
@@ -75,36 +81,56 @@ button{
 
 <script>
 
+// 🔥 CONFIG FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-firebase.initializeApp(firebaseConfig);
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// 🟢 FUNCIÓN REGISTRO
 async function registrar(){
 
-  let nombre = nombreInput("nombre");
-  let telefono = nombreInput("telefono");
-  let cedula = nombreInput("cedula");
-  let nacimiento = nombreInput("nacimiento");
-  let expedicion = nombreInput("expedicion");
+  let nombre = val("nombre");
+  let telefono = val("telefono");
+  let cedula = val("cedula");
+  let nacimiento = val("nacimiento");
+  let expedicion = val("expedicion");
 
-  let ref1nombre = nombreInput("ref1nombre");
-  let ref1tel = nombreInput("ref1tel");
+  let ref1nombre = val("ref1nombre");
+  let ref1tel = val("ref1tel");
 
-  let ref2nombre = nombreInput("ref2nombre");
-  let ref2tel = nombreInput("ref2tel");
+  let ref2nombre = val("ref2nombre");
+  let ref2tel = val("ref2tel");
 
-  let email = nombreInput("email");
-  let password = nombreInput("password");
+  let email = val("email");
+  let password = val("password");
 
-  if(!nombre || !telefono || !cedula || !email || !password){
+  if(!nombre || !telefono || !cedula || !email || !password || !nacimiento){
     alert("Completa todos los campos");
+    return;
+  }
+
+  // 🔥 VALIDAR MAYOR DE EDAD
+  let fechaNac = new Date(nacimiento);
+  let hoy = new Date();
+
+  let edad = hoy.getFullYear() - fechaNac.getFullYear();
+  let mes = hoy.getMonth() - fechaNac.getMonth();
+
+  if(mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())){
+    edad--;
+  }
+
+  if(edad < 18){
+    alert("❌ Debes ser mayor de 18 años");
     return;
   }
 
@@ -113,13 +139,16 @@ async function registrar(){
     let user = await auth.createUserWithEmailAndPassword(email,password);
 
     await db.collection("clientes").doc(user.user.uid).set({
+      uid: user.user.uid,
       nombre,
       telefono,
       cedula,
       nacimiento,
       expedicion,
       email,
-      cupo:100000,
+      edad,
+      cupo: 100000,
+      fechaRegistro: new Date().toISOString(),
 
       referencias:[
         {nombre:ref1nombre, telefono:ref1tel},
@@ -127,15 +156,17 @@ async function registrar(){
       ]
     });
 
-    alert("Cuenta creada");
-    window.location.href="login.html";
+    alert("Cuenta creada correctamente ✔️");
+
+    window.location.href = "login.html";
 
   }catch(e){
-    alert(e.message);
+    alert("Error: " + e.message);
   }
 }
 
-function nombreInput(id){
+// 🔧 FUNCION AUX
+function val(id){
   return document.getElementById(id).value;
 }
 
