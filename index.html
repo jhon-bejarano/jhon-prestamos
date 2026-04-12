@@ -12,74 +12,48 @@
 <style>
 body {
   margin:0;
-  font-family:'Segoe UI',sans-serif;
+  font-family:'Segoe UI', sans-serif;
   background:#0f172a;
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  min-height:100vh;
   color:white;
 }
 
-/* TARJETA FONDO */
-body::before{
-  content:"";
-  position:fixed;
-  width:90%;
-  height:260px;
-  top:20px;
-  left:50%;
-  transform:translateX(-50%);
-  border-radius:20px;
-  background: linear-gradient(135deg,#22c55e,#3b82f6,#9333ea);
-  box-shadow:0 10px 40px rgba(0,0,0,0.6);
-  z-index:0;
-}
-
-/* TEXTO TARJETA */
-body::after{
-  content:"J.B CAPITAL";
-  position:fixed;
-  top:40px;
-  left:50%;
-  transform:translateX(-50%);
-  font-size:22px;
-  font-weight:bold;
-  letter-spacing:2px;
-  z-index:1;
-}
-
-/* CONTENEDOR */
-.app{
-  position:relative;
-  z-index:2;
+.app {
   max-width:420px;
-  width:100%;
+  margin:auto;
   padding:20px;
 }
 
+/* HEADER */
+.header {
+  background: linear-gradient(135deg,#22c55e,#16a34a);
+  padding:20px;
+  border-radius:15px;
+  margin-bottom:15px;
+  text-align:center;
+  box-shadow:0 8px 25px rgba(0,0,0,0.4);
+}
+
 /* PANEL */
-.panel{
-  background:rgba(255,255,255,0.05);
+.panel {
+  background:#1e293b;
   padding:15px;
   border-radius:12px;
-  backdrop-filter:blur(10px);
   margin-bottom:15px;
 }
 
 /* INPUTS */
-input{
+input {
   width:100%;
   padding:12px;
   margin:6px 0;
   border-radius:10px;
   border:none;
-  background:#1e293b;
+  background:#020617;
   color:white;
 }
 
 /* BOTONES */
-button{
+button {
   width:100%;
   padding:12px;
   margin:6px 0;
@@ -87,30 +61,23 @@ button{
   border-radius:10px;
   font-weight:bold;
   cursor:pointer;
-  transition:0.3s;
 }
 
-button:hover{
-  transform:scale(1.03);
-}
-
-.btn-main{background:#22c55e;}
-.btn-blue{background:#3b82f6;}
-.btn-orange{background:#f59e0b;}
-.btn-red{background:#ef4444;}
+.btn-main { background:#22c55e; }
+.btn-blue { background:#3b82f6; }
+.btn-orange { background:#f59e0b; }
+.btn-red { background:#ef4444; }
 
 /* CARDS */
-.card{
-  background:rgba(255,255,255,0.05);
+.card {
+  background:#1e293b;
   padding:15px;
   border-radius:12px;
   margin-top:10px;
-  backdrop-filter:blur(8px);
-  box-shadow:0 4px 20px rgba(0,0,0,0.3);
 }
 
 /* ALERTA */
-.alerta{
+.alerta {
   color:#f87171;
   font-weight:bold;
 }
@@ -132,7 +99,10 @@ button:hover{
 <!-- APP -->
 <div id="app" style="display:none">
 
-<h1>💰 J.B Capital</h1>
+<div class="header">
+  <h1>💰 J.B Capital</h1>
+  <p>Gestión de préstamos</p>
+</div>
 
 <div class="panel">
   <h3>💵 Ganancia: $<span id="gananciaTotal">0</span></h3>
@@ -162,55 +132,62 @@ button:hover{
 
 <script>
 
-const firebaseConfig={
-  apiKey:"AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
-  authDomain:"jb-prestamos.firebaseapp.com",
-  projectId:"jb-prestamos"
+const firebaseConfig = {
+  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
+  authDomain: "jb-prestamos.firebaseapp.com",
+  projectId: "jb-prestamos"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db=firebase.firestore();
+const db = firebase.firestore();
 
-// LOGIN
+// LOGIN CORREGIDO
 function login(){
-  firebase.auth().signInWithEmailAndPassword(user.value,pass.value)
+  const email = document.getElementById("user").value;
+  const password = document.getElementById("pass").value;
+
+  firebase.auth().signInWithEmailAndPassword(email, password)
   .then(()=>{
-    login.style.display="none";
-    app.style.display="block";
+    document.getElementById("login").style.display="none";
+    document.getElementById("app").style.display="block";
     cargar();
-  }).catch(e=>alert(e.message));
+  })
+  .catch(e=>{
+    alert("Error: " + e.message);
+    console.log(e);
+  });
 }
 
 // GUARDAR
 async function guardar(){
-  let u=firebase.auth().currentUser;
+  let user = firebase.auth().currentUser;
 
-  let nombre=val("nombre");
-  let telefono=val("telefono");
-  let monto=parseFloat(val("monto"));
-  let interes=parseFloat(val("interes"));
-  let dias=parseInt(val("dias"));
-  let cuotas=parseInt(val("cuotas"));
+  let nombre = val("nombre");
+  let telefono = val("telefono");
+  let monto = parseFloat(val("monto"));
+  let interes = parseFloat(val("interes"));
+  let dias = parseInt(val("dias"));
+  let cuotas = parseInt(val("cuotas"));
 
   if(!nombre||!telefono||!monto||!interes||!dias||!cuotas){
     alert("Completa todo");
     return;
   }
 
-  let total=monto+(monto*interes/100);
-  let cuotaValor=total/cuotas;
+  let total = monto + (monto * interes / 100);
+  let cuotaValor = total / cuotas;
 
-  let f=new Date();
-  let pago=new Date();
-  pago.setDate(f.getDate()+dias);
+  let f = new Date();
+  let pago = new Date();
+  pago.setDate(f.getDate() + dias);
 
   await db.collection("prestamos").add({
-    nombre,telefono,monto,interes,total,
-    cuotas,cuotaValor,pagadas:0,
+    nombre, telefono, monto, interes, total,
+    cuotas, cuotaValor, pagadas:0,
     fecha:f.toISOString(),
     fechaPago:pago.toISOString(),
     estado:"pendiente",
-    userId:u.uid
+    userId:user.uid
   });
 
   alert("Guardado ✔️");
@@ -224,13 +201,13 @@ function val(id){
 
 // CARGAR
 async function cargar(){
-  let u=firebase.auth().currentUser;
+  let user = firebase.auth().currentUser;
 
-  let datos=await db.collection("prestamos")
-  .where("userId","==",u.uid).get();
+  let datos = await db.collection("prestamos")
+    .where("userId","==",user.uid).get();
 
   let g=0,tp=0,p=0,h=0;
-  let hoy=new Date().toDateString();
+  let hoyFecha=new Date().toDateString();
 
   lista.innerHTML="";
 
@@ -240,7 +217,9 @@ async function cargar(){
     let gan=d.total-d.monto;
     g+=gan; tp+=d.monto;
 
-    if(new Date(d.fecha).toDateString()===hoy) h+=gan;
+    if(new Date(d.fecha).toDateString()===hoyFecha){
+      h+=gan;
+    }
 
     let vencido=new Date()>new Date(d.fechaPago);
     if(d.estado==="pendiente") p++;
@@ -272,9 +251,10 @@ async function cargar(){
 
 // VENCIDOS
 async function verVencidos(){
-  let u=firebase.auth().currentUser;
+  let user=firebase.auth().currentUser;
+
   let datos=await db.collection("prestamos")
-  .where("userId","==",u.uid).get();
+    .where("userId","==",user.uid).get();
 
   lista.innerHTML="";
   let hoy=new Date();
@@ -289,9 +269,10 @@ async function verVencidos(){
 
 // RECORDAR
 async function recordar(){
-  let u=firebase.auth().currentUser;
+  let user=firebase.auth().currentUser;
+
   let datos=await db.collection("prestamos")
-  .where("userId","==",u.uid).get();
+    .where("userId","==",user.uid).get();
 
   let hoy=new Date();
 
