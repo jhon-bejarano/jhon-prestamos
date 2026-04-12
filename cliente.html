@@ -74,9 +74,9 @@ button{
 <div class="card">
 <h3>Solicitar préstamo</h3>
 
-<input id="monto" placeholder="Monto">
-<input id="cuotas" placeholder="Cuotas">
-<input id="dias" placeholder="Días">
+<input id="monto" type="number" placeholder="Monto" max="100000">
+<input id="cuotas" type="number" placeholder="Cuotas" max="1">
+<input id="dias" type="number" placeholder="Días">
 
 <button class="btn" onclick="solicitar()">Solicitar</button>
 </div>
@@ -93,6 +93,7 @@ button{
 
 <script>
 
+// 🔥 CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
@@ -157,7 +158,7 @@ async function cargarPrestamos(uid){
   });
 }
 
-// 🟢 SOLICITAR PRÉSTAMO
+// 🟢 SOLICITAR
 async function solicitar(){
 
   let user = auth.currentUser;
@@ -171,9 +172,14 @@ async function solicitar(){
     return;
   }
 
-  // 🚨 VALIDACIÓN DE CUPO
+  // 🔒 VALIDACIONES
   if(monto > 100000){
-    alert("❌ No puedes solicitar más de $100000");
+    alert("❌ Máximo permitido: $100000");
+    return;
+  }
+
+  if(cuotas > 1){
+    alert("❌ Solo se permite 1 cuota");
     return;
   }
 
@@ -185,9 +191,9 @@ async function solicitar(){
 
     await db.collection("prestamos").add({
       userId: user.uid,
-      monto: monto,
-      cuotas: cuotas,
-      dias: dias,
+      monto,
+      cuotas,
+      dias,
       pagadas: 0,
       estado: "pendiente",
       fecha: hoy.toISOString(),
@@ -202,6 +208,19 @@ async function solicitar(){
     alert("Error: " + e.message);
   }
 }
+
+// 🚫 BLOQUEO EN TIEMPO REAL
+document.getElementById("monto").addEventListener("input", function(){
+  if(this.value > 100000){
+    this.value = 100000;
+  }
+});
+
+document.getElementById("cuotas").addEventListener("input", function(){
+  if(this.value > 1){
+    this.value = 1;
+  }
+});
 
 // 🚪 LOGOUT
 function logout(){
