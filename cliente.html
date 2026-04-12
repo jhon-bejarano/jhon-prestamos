@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Cliente - J.B Capital</title>
+
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+}
+
+.app{
+  max-width:600px;
+  margin:auto;
+  padding:20px;
+}
+
+.card{
+  background:#1e293b;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:10px;
+}
+
+button{
+  width:100%;
+  padding:10px;
+  margin-top:5px;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+.blue{background:#3b82f6;}
+.green{background:#22c55e;}
+.red{background:#ef4444;}
+
+.alerta{
+  color:#f87171;
+  font-weight:bold;
+}
+
+progress{
+  width:100%;
+  height:10px;
+  margin:8px 0;
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<h2>💰 J.B Capital - Cliente</h2>
+
+<p>👤 <b id="user">Cargando...</b></p>
+
+<div class="card">
+<h3>📋 Mis préstamos</h3>
+<div id="lista"></div>
+</div>
+
+<button class="red" onclick="logout()">Cerrar sesión</button>
+
+</div>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
+  authDomain: "jb-prestamos.firebaseapp.com",
+  projectId: "jb-prestamos"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let lista = document.getElementById("lista");
+
+// LOGIN AUTOMÁTICO
+auth.onAuthStateChanged(async (user)=>{
+
+  if(!user){
+    window.location.href = "index.html";
+    return;
+  }
+
+  document.getElementById("user").innerText = user.email;
+
+  cargarPrestamos(user.uid);
+});
+
+// CARGAR PRÉSTAMOS
+async function cargarPrestamos(uid){
+
+  lista.innerHTML = "Cargando...";
+
+  let datos = await db.collection("prestamos")
+    .where("userId","==",uid)
+    .get();
+
+  lista.innerHTML = "";
+
+  if(datos.empty){
+    lista.innerHTML = "<p>No tienes préstamos</p>";
+    return;
+  }
+
+  datos.forEach(doc=>{
+    let d = doc.data();
+
+    // FECHAS
+    let fechaSolicitud = new Date(d.fecha).toLocaleDateString();
+    let vencimiento = new Date(d.fechaPago).toLocaleDateString();
+
+    // CUPOS
+    let cupo = d.cupo || d.monto;
+    let usado = d.usado || d.monto;
+    let disponible = cupo - usado;
+    let porcentajeUso = Math.round((usado / cupo) * 100);
+
+    // SALDO
+    let pagado = (d.pagadas || 0) * (d.cuotaValor || 0);
+    let saldo = d.total - pagado;
+
+    // VENCIDO
+    let vencido = new Date() > new Date(d.fechaPago);
+
+    lista.innerHTML += `
+    <div class="card">
+
+      <h3>💳 Línea de crédito</h3>
+
+      <b>💰 Cupo total:</b> $${cupo}<br>
+      <b>📉 Usado:</b> $${usado}<br>
+      <b>💳 Disponible:</b> $${disponible}<br>
+
+      <progress value="${porcentajeUso}" max="100"></progress>
+      <small>${porcentajeUso}% usado</small>
+
+      <hr>
+
+      <b>📅 Fecha solicitud:</b> ${fechaSolicitud}<br>
+      <b>⏳ Vence:</b> ${vencimiento}<br>
+
+      <hr>
+
+      <b>💵 Monto préstamo:</b> $${d.monto}<br>
+      <b>💰 Total a pagar:</b> $${d.total}<br>
+      <b>📉 Saldo pendiente:</b> $${saldo}<br>
+
+      <b>🧾 Cuotas:</b> ${d.pagadas || 0}/${d.cuotas}<br>
+
+      ${
+        vencido && d.estado === "pendiente"
+          ? '<span class="alerta">⚠️ PRÉSTAMO VENCIDO</span><br>'
+          : ''
+      }
+
+      <a href="https://wa.me/57${d.telefono}?text=Hola, tengo un préstamo activo de $${d.total} con saldo pendiente de $${saldo}" target="_blank">
+        <button class="blue">Contactar asesor</button>
+      </a>
+
+    </div>
+    `;
+  });
+}
+
+// LOGOUT
+function logout(){
+  auth.signOut().then(()=>{
+    window.location.href = "index.html";
+  });
+}
+
+</script>
+
+</body>
+</html>
