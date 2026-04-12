@@ -16,10 +16,16 @@ body{
   color:white;
 }
 
-.box{
-  max-width:400px;
+.container{
+  max-width:420px;
   margin:auto;
+  padding:25px;
+}
+
+.card{
+  background:#1e293b;
   padding:20px;
+  border-radius:12px;
 }
 
 input{
@@ -43,19 +49,83 @@ button{
   font-weight:bold;
   cursor:pointer;
 }
+
+button:hover{
+  background:#16a34a;
+}
+
+h2{
+  text-align:center;
+}
 </style>
 </head>
+
 <body>
 
-<div class="box">
+<div class="container">
+
+<div class="card">
 
 <h2>🟢 Registro Cliente</h2>
 
-<input id="nombre" placeholder="Nombre">
+<input id="nombre" placeholder="Nombre completo">
 <input id="telefono" placeholder="Teléfono">
-<input id="email" placeholder="Correo">
-<input id="pass" type="password" placeholder="Contraseña">
+<input id="email" placeholder="Correo electrónico">
+<input id="password" type="password" placeholder="Contraseña">
 
 <button onclick="registrar()">Crear cuenta</button>
 
 </div>
+
+</div>
+
+<script>
+
+// 🔥 FIREBASE CONFIG (usa el mismo de tu proyecto)
+const firebaseConfig = {
+  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
+  authDomain: "jb-prestamos.firebaseapp.com",
+  projectId: "jb-prestamos"
+};
+
+firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+
+// 🟢 FUNCIÓN REGISTRO
+async function registrar(){
+
+  let nombre = document.getElementById("nombre").value;
+  let telefono = document.getElementById("telefono").value;
+  let email = document.getElementById("email").value;
+  let password = document.getElementById("password").value;
+
+  if(!nombre || !telefono || !email || !password){
+    alert("Completa todos los campos");
+    return;
+  }
+
+  try {
+
+    // 1. CREAR USUARIO EN AUTH
+    let userCredential = await auth.createUserWithEmailAndPassword(email, password);
+
+    let uid = userCredential.user.uid;
+
+    // 2. GUARDAR CLIENTE EN FIRESTORE
+    await db.collection("clientes").doc(uid).set({
+      uid: uid,
+      nombre: nombre,
+      telefono: telefono,
+      email: email,
+      fechaRegistro: new Date().toISOString()
+    });
+
+    alert("Cuenta creada correctamente ✔️");
+
+    // 3. REDIRIGIR AL CLIENTE
+    window.location.href = "cliente.html";
+
+  } catch (error
