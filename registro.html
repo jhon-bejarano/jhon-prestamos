@@ -2,170 +2,111 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Registro Cliente</title>
+<title>Registro con OTP</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<style>
-body{
-  margin:0;
-  font-family:Arial;
-  background:#0f172a;
-  color:white;
-  display:flex;
-  justify-content:center;
-}
-.card{
-  background:#1e293b;
-  padding:20px;
-  border-radius:10px;
-  margin-top:20px;
-  width:320px;
-}
-input{
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  border:none;
-  border-radius:6px;
-}
-button{
-  width:100%;
-  padding:10px;
-  background:#22c55e;
-  border:none;
-  border-radius:6px;
-  color:white;
-  font-weight:bold;
-  cursor:pointer;
-}
-h4{
-  margin-top:10px;
-}
-</style>
 </head>
 
-<body>
+<body style="background:#0f172a;color:white;font-family:Arial;text-align:center">
 
-<div class="card">
+<h2>Registro</h2>
 
-<h2>🟢 Registro Cliente</h2>
+<input id="cedula" placeholder="Cédula"><br><br>
+<input id="telefono" placeholder="Teléfono (Ej: 3001234567)"><br><br>
+<input id="email" placeholder="Correo"><br><br>
+<input id="password" type="password" placeholder="Contraseña"><br><br>
 
-<input id="nombre" placeholder="Nombre completo">
-<input id="telefono" placeholder="Teléfono">
+<button onclick="enviarCodigo()">Enviar código</button>
 
-<input id="cedula" placeholder="Cédula">
+<br><br>
 
-<label>Fecha nacimiento</label>
-<input type="date" id="nacimiento">
+<input id="codigo" placeholder="Código OTP"><br><br>
+<button onclick="verificarCodigo()">Verificar y crear cuenta</button>
 
-<label>Fecha expedición documento</label>
-<input type="date" id="expedicion">
-
-<h4>Referencia 1</h4>
-<input id="ref1nombre" placeholder="Nombre referencia 1">
-<input id="ref1tel" placeholder="Teléfono referencia 1">
-
-<h4>Referencia 2</h4>
-<input id="ref2nombre" placeholder="Nombre referencia 2">
-<input id="ref2tel" placeholder="Teléfono referencia 2">
-
-<input id="email" placeholder="Correo">
-<input id="password" type="password" placeholder="Contraseña">
-
-<button onclick="registrar()">Crear cuenta</button>
-
-</div>
+<div id="recaptcha"></div>
 
 <script>
 
-// 🔥 CONFIG FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
 
-// 🟢 FUNCIÓN REGISTRO
-async function registrar(){
+let confirmationResult;
 
-  let nombre = val("nombre");
-  let telefono = val("telefono");
-  let cedula = val("cedula");
-  let nacimiento = val("nacimiento");
-  let expedicion = val("expedicion");
+// 🔐 RECAPTCHA
+window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha', {
+  size: 'normal'
+});
 
-  let ref1nombre = val("ref1nombre");
-  let ref1tel = val("ref1tel");
+// 📲 ENVIAR OTP
+async function enviarCodigo(){
 
-  let ref2nombre = val("ref2nombre");
-  let ref2tel = val("ref2tel");
+  let telefono = document.getElementById("telefono").value;
 
-  let email = val("email");
-  let password = val("password");
-
-  if(!nombre || !telefono || !cedula || !email || !password || !nacimiento){
-    alert("Completa todos los campos");
+  if(!telefono){
+    alert("Ingresa teléfono");
     return;
   }
 
-  // 🔥 VALIDAR MAYOR DE EDAD
-  let fechaNac = new Date(nacimiento);
-  let hoy = new Date();
-
-  let edad = hoy.getFullYear() - fechaNac.getFullYear();
-  let mes = hoy.getMonth() - fechaNac.getMonth();
-
-  if(mes < 0 || (mes === 0 && hoy.getDate() < fechaNac.getDate())){
-    edad--;
-  }
-
-  if(edad < 18){
-    alert("❌ Debes ser mayor de 18 años");
-    return;
-  }
+  let numero = "+57" + telefono;
 
   try{
-
-    let user = await auth.createUserWithEmailAndPassword(email,password);
-
-    await db.collection("clientes").doc(user.user.uid).set({
-      uid: user.user.uid,
-      nombre,
-      telefono,
-      cedula,
-      nacimiento,
-      expedicion,
-      email,
-      edad,
-      cupo: 100000,
-      fechaRegistro: new Date().toISOString(),
-
-      referencias:[
-        {nombre:ref1nombre, telefono:ref1tel},
-        {nombre:ref2nombre, telefono:ref2tel}
-      ]
-    });
-
-    alert("Cuenta creada correctamente ✔️");
-
-    window.location.href = "login.html";
-
+    confirmationResult = await auth.signInWithPhoneNumber(numero, recaptchaVerifier);
+    alert("Código enviado ✔️");
   }catch(e){
     alert("Error: " + e.message);
   }
 }
 
-// 🔧 FUNCION AUX
+// ✅ VERIFICAR OTP Y CREAR CUENTA
+async function verificarCodigo(){
+
+  let codigo = document.getElementById("codigo").value;
+
+  let cedula = val("cedula");
+  let telefono = val("telefono");
+  let email = val("email");
+  let password = val("password");
+
+  if(!codigo){
+    alert("Ingresa el código");
+    return;
+  }
+
+  try{
+
+    await confirmationResult.confirm(codigo);
+
+    // 🔥 CREAR USUARIO EMAIL
+    let user = await auth.createUserWithEmailAndPassword(email,password);
+
+    await db.collection("clientes").doc(user.user.uid).set({
+      cedula,
+      telefono,
+      email,
+      verificado:true,
+      completo:false
+    });
+
+    alert("Cuenta verificada y creada ✔️");
+
+    window.location.href="login.html";
+
+  }catch(e){
+    alert("Código incorrecto");
+  }
+}
+
 function val(id){
   return document.getElementById(id).value;
 }
