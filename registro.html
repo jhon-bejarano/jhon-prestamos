@@ -24,4 +24,53 @@ button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;bac
 <h2>🟢 Registro Cliente</h2>
 
 <input id="nombre" placeholder="Nombre">
-<input
+<input id="telefono" placeholder="Teléfono">
+<input id="email" placeholder="Correo">
+<input id="password" type="password" placeholder="Contraseña">
+
+<button onclick="registrar()">Crear cuenta</button>
+
+</div>
+</div>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
+  authDomain: "jb-prestamos.firebaseapp.com",
+  projectId: "jb-prestamos"
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+async function registrar(){
+
+  let nombre = document.getElementById("nombre").value;
+  let telefono = document.getElementById("telefono").value;
+  let email = document.getElementById("email").value;
+  let password = document.getElementById("password").value;
+
+  if(!nombre || !telefono || !email || !password){
+    alert("Completa todo");
+    return;
+  }
+
+  try{
+    let user = await auth.createUserWithEmailAndPassword(email,password);
+    let uid = user.user.uid;
+
+    await db.collection("clientes").doc(uid).set({
+      uid,nombre,telefono,email
+    });
+
+    alert("Cuenta creada ✔️");
+    window.location.href="login.html";
+
+  }catch(e){
+    alert(e.message);
+  }
+}
+</script>
+</body>
+</html>
