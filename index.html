@@ -34,6 +34,7 @@
     background: green;
     color: white;
     font-weight: bold;
+    cursor: pointer;
   }
 
   .card {
@@ -44,75 +45,9 @@
   }
 </style>
 
-<!-- Firebase compat (ESTABLE para GitHub Pages) -->
-<script>
-  try {
-    const firebaseConfig = {
-      apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
-      authDomain: "jb-prestamos.firebaseapp.com",
-      projectId: "jb-prestamos",
-      storageBucket: "jb-prestamos.appspot.com",
-      messagingSenderId: "45452353450",
-      appId: "1:45452353450:web:caaca5cf8ecf494043d5d3"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-
-    window.guardar = async function () {
-      console.log("BOTÓN FUNCIONA");
-
-      let nombre = document.getElementById("nombre").value;
-      let monto = document.getElementById("monto").value;
-
-      if (!nombre || !monto) {
-        alert("Completa los campos");
-        return;
-      }
-
-      try {
-        await db.collection("prestamos").add({
-          nombre,
-          monto
-        });
-
-        alert("Guardado ✔️");
-        cargar();
-      } catch (e) {
-        alert("error: " + e.message);
-        console.log(e);
-      }
-    }
-
-    async function cargar() {
-      let lista = document.getElementById("lista");
-      lista.innerHTML = "";
-
-      let datos = await db.collection("prestamos").get();
-
-      datos.forEach(doc => {
-        let d = doc.data();
-
-        lista.innerHTML += `
-          <div class="card">
-            👤 ${d.nombre} - 💵 ${d.monto}
-          </div>
-        `;
-      });
-    }
-
-    cargar();
-
-  } catch (error) {
-    document.body.innerHTML = `
-      <h3 style="color:white;text-align:center">
-        ERROR AL CARGAR FIREBASE<br><br>
-        ${error.message}
-      </h3>
-    `;
-    console.log(error);
-  }
-</script>
+<!-- FIREBASE (SOLO UNA VEZ) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 </head>
 
@@ -124,7 +59,8 @@
 
   <input id="nombre" placeholder="Nombre del cliente">
   <input id="monto" placeholder="Monto del préstamo">
-  <button id="btnguardar()">Guardar préstamo</button>
+
+  <button id="btnGuardar">Guardar préstamo</button>
 
   <h2>📋 Lista</h2>
   <div id="lista"></div>
@@ -132,65 +68,57 @@
 </div>
 
 <script>
-  alert("SCRIPT CARGANDO");
+  alert("SCRIPT CARGADO");
 
+  // 🔥 SOLO UN FIREBASE (EL CORRECTO)
   const firebaseConfig = {
-    apiKey: "AIzaSyDTbYaRdsgsRHxIw1Z1c4lTVIKE1Yv4_xQ",
-    authDomain: "jb-prestamos-5fc43.firebaseapp.com",
-    projectId: "jb-prestamos-5fc43",
-    storageBucket: "jb-prestamos-5fc43.appspot.com",
-    messagingSenderId: "187902145563",
-    appId: "1:187902145563:web:42d27d862d0e63f18774be"
+    apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
+    authDomain: "jb-prestamos.firebaseapp.com",
+    projectId: "jb-prestamos",
+    storageBucket: "jb-prestamos.appspot.com",
+    messagingSenderId: "45452353450",
+    appId: "1:45452353450:web:caaca5cf8ecf494043d5d3"
   };
 
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // 🔥 FORZAR EJECUCIÓN CUANDO TODO YA EXISTE
-  function iniciar() {
-    const btn = document.getElementById("btnGuardar");
+  // 🔥 GUARDAR
+  document.getElementById("btnGuardar").onclick = async function () {
+    alert("CLICK DETECTADO");
 
-    if (!btn) {
-      alert("BOTÓN NO ENCONTRADO");
-      return;
-    }
+    let nombre = document.getElementById("nombre").value;
+    let monto = document.getElementById("monto").value;
 
-    btn.onclick = async function () {
-      alert("CLICK DETECTADO");
+    await db.collection("prestamos").add({
+      nombre,
+      monto
+    });
 
-      let nombre = document.getElementById("nombre").value;
-      let monto = document.getElementById("monto").value;
+    alert("GUARDADO ✔️");
+    cargar();
+  };
 
-      try {
-        await db.collection("prestamos").add({
-          nombre,
-          monto
-        });
+  // 🔥 CARGAR
+  async function cargar() {
+    let lista = document.getElementById("lista");
+    lista.innerHTML = "";
 
-        alert("GUARDADO ✔️");
+    let datos = await db.collection("prestamos").get();
 
-      } catch (e) {
-        alert("ERROR: " + e.message);
-      }
-    };
+    datos.forEach(doc => {
+      let d = doc.data();
+
+      lista.innerHTML += `
+        <div class="card">
+          👤 ${d.nombre} - 💵 ${d.monto}
+        </div>
+      `;
+    });
   }
 
-  // 🔥 INTENTAR VARIAS VECES (CLAVE PARA GITHUB PAGES)
-  let intentos = 0;
-  let intervalo = setInterval(() => {
-    intentos++;
-
-    const btn = document.getElementById("btnGuardar");
-
-    if (btn) {
-      clearInterval(intervalo);
-      iniciar();
-    }
-
-    if (intentos > 10) {
-      clearInterval(intervalo);
-      alert("NO SE ENCONTRÓ EL BOTÓN");
-    }
-
-  }, 300);
+  cargar();
 </script>
+
+</body>
+</html>
