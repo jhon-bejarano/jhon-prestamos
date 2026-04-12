@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Cliente - J.B Capital</title>
+<title>Admin - J.B Capital</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -29,23 +29,28 @@ body{
   margin-bottom:10px;
 }
 
+input, select{
+  width:100%;
+  padding:10px;
+  margin:5px 0;
+  border:none;
+  border-radius:8px;
+  background:#020617;
+  color:white;
+}
+
 button{
   width:100%;
   padding:10px;
   margin-top:5px;
   border:none;
   border-radius:8px;
+  font-weight:bold;
   cursor:pointer;
-  font-weight:bold;
 }
 
+.green{background:#22c55e;}
 .blue{background:#3b82f6;}
-.red{background:#ef4444;}
-
-.alerta{
-  color:#f87171;
-  font-weight:bold;
-}
 </style>
 </head>
 
@@ -53,19 +58,32 @@ button{
 
 <div class="container">
 
-<h2>💰 J.B Capital - Cliente</h2>
+<h2>💰 Admin - J.B Capital</h2>
 
-<p>👤 <b id="user">Cargando...</b></p>
+<div class="card">
+
+<h3>Crear préstamo</h3>
+
+<select id="cliente">
+  <option value="">Seleccionar cliente</option>
+</select>
+
+<input id="monto" placeholder="Monto">
+<input id="interes" placeholder="Interés %">
+<input id="cuotas" placeholder="Cuotas">
+<input id="dias" placeholder="Días">
+
+<button class="green" onclick="guardar()">Guardar préstamo</button>
+
+</div>
 
 <div id="lista"></div>
-
-<button class="red" onclick="logout()">Cerrar sesión</button>
 
 </div>
 
 <script>
 
-// 🔥 CONFIG FIREBASE
+// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
@@ -74,70 +92,66 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
-const auth = firebase.auth();
 const db = firebase.firestore();
 
-let lista = document.getElementById("lista");
+// 🔵 CARGAR CLIENTES AUTOMÁTICO
+async function cargarClientes(){
 
-// 🔐 PROTECCIÓN DE RUTA
-auth.onAuthStateChanged((user)=>{
+  let select = document.getElementById("cliente");
 
-  if(!user){
-    window.location.href = "login.html";
-    return;
-  }
-
-  document.getElementById("user").innerText = user.email;
-
-  cargarPrestamos(user.uid);
-});
-
-// 📊 CARGAR PRÉSTAMOS DEL CLIENTE
-async function cargarPrestamos(uid){
-
-  lista.innerHTML = "Cargando...";
-
-  let datos = await db.collection("prestamos")
-    .where("clienteId","==",uid)
-    .get();
-
-  lista.innerHTML = "";
-
-  if(datos.empty){
-    lista.innerHTML = "<p>No tienes préstamos</p>";
-    return;
-  }
+  let datos = await db.collection("clientes").get();
 
   datos.forEach(doc=>{
-    let d = doc.data();
+    let c = doc.data();
 
-    let vencido = new Date() > new Date(d.fechaPago);
-
-    lista.innerHTML += `
-    <div class="card">
-
-      <b>💵 Monto:</b> $${d.monto}<br>
-      <b>💰 Total:</b> $${d.total}<br>
-      <b>🧾 Cuotas:</b> ${d.pagadas}/${d.cuotas}<br>
-      <b>📅 Vence:</b> ${new Date(d.fechaPago).toLocaleDateString()}<br>
-
-      ${vencido ? '<span class="alerta">⚠️ VENCIDO</span>' : ''}
-
-      <a href="https://wa.me/57${d.telefono}" target="_blank">
-        <button class="blue">Contactar</button>
-      </a>
-
-    </div>
+    select.innerHTML += `
+      <option value="${c.uid}">
+        ${c.nombre} - ${c.telefono}
+      </option>
     `;
   });
 }
 
-// 🚪 LOGOUT
-function logout(){
-  auth.signOut().then(()=>{
-    window.location.href = "login.html";
+// 💰 GUARDAR PRÉSTAMO
+async function guardar(){
+
+  let clienteId = document.getElementById("cliente").value;
+  let monto = parseFloat(document.getElementById("monto").value);
+  let interes = parseFloat(document.getElementById("interes").value);
+  let cuotas = parseInt(document.getElementById("cuotas").value);
+  let dias = parseInt(document.getElementById("dias").value);
+
+  if(!clienteId || !monto || !interes || !cuotas || !dias){
+    alert("Completa todo");
+    return;
+  }
+
+  let total = monto + (monto * interes / 100);
+  let cuotaValor = total / cuotas;
+
+  let f = new Date();
+  let pago = new Date();
+  pago.setDate(f.getDate() + dias);
+
+  await db.collection("prestamos").add({
+    clienteId,
+    monto,
+    total,
+    cuotas,
+    cuotaValor,
+    pagadas:0,
+    fecha:f.toISOString(),
+    fechaPago:pago.toISOString(),
+    estado:"pendiente"
   });
+
+  alert("Préstamo creado ✔️");
+
+  document.querySelectorAll("input").forEach(i=>i.value="");
 }
+
+// 🚀 INICIAR
+cargarClientes();
 
 </script>
 
