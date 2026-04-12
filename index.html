@@ -2,55 +2,27 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>J.B Préstamos PRO</title>
+<title>J.B Préstamos PRO MAX</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
 <style>
-  body {
-    margin: 0;
-    font-family: Arial;
-    background: #0f172a;
-    color: white;
-    display: flex;
-    justify-content: center;
-  }
-
-  .app {
-    width: 100%;
-    max-width: 420px;
-    padding: 20px;
-    text-align: center;
-  }
-
-  input, button {
-    width: 90%;
-    padding: 10px;
-    margin: 5px;
-    border-radius: 6px;
-    border: none;
-  }
-
-  button {
-    background: green;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-  }
-
-  .delete {
-    background: red;
-  }
-
-  .card {
-    background: #111827;
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 8px;
-  }
+body {
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  display:flex;
+  justify-content:center;
+}
+.app { max-width:420px; width:100%; padding:20px; text-align:center; }
+input,button { width:90%; padding:10px; margin:5px; border-radius:6px; border:none; }
+button { background:green; color:white; font-weight:bold; }
+.delete { background:red; }
+.card { background:#111827; margin-top:10px; padding:10px; border-radius:8px; }
+.alerta { color:red; font-weight:bold; }
 </style>
 </head>
 
@@ -58,37 +30,36 @@
 
 <div class="app">
 
-  <!-- LOGIN -->
-  <div id="login">
-    <h2>🔐 Iniciar sesión</h2>
-    <input id="user" placeholder="Correo">
-    <input id="pass" type="password" placeholder="Contraseña">
-    <button onclick="login()">Entrar</button>
-  </div>
+<div id="login">
+<h2>🔐 Login</h2>
+<input id="user" placeholder="Correo">
+<input id="pass" type="password" placeholder="Contraseña">
+<button onclick="login()">Entrar</button>
+</div>
 
-  <!-- APP -->
-  <div id="app" style="display:none">
+<div id="app" style="display:none">
 
-    <h1>💰 J.B Préstamos PRO</h1>
+<h1>💰 J.B Préstamos</h1>
 
-    <h2>💵 Ganancia total: $<span id="gananciaTotal">0</span></h2>
+<h3>💵 Ganancia: $<span id="gananciaTotal">0</span></h3>
+<h3>📊 Prestado: $<span id="totalPrestado">0</span></h3>
+<h3>⚠️ Pendientes: <span id="pendientes">0</span></h3>
 
-    <input id="nombre" placeholder="Nombre">
-    <input id="monto" placeholder="Monto">
-    <input id="interes" placeholder="Interés %">
+<input id="nombre" placeholder="Nombre">
+<input id="monto" placeholder="Monto">
+<input id="interes" placeholder="Interés %">
+<input id="dias" placeholder="Días para pagar">
 
-    <button onclick="guardar()">Guardar</button>
+<button onclick="guardar()">Guardar</button>
 
-    <h2>📋 Lista</h2>
-    <div id="lista"></div>
+<h2>📋 Lista</h2>
+<div id="lista"></div>
 
-  </div>
+</div>
 
 </div>
 
 <script>
-
-// 🔥 CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
@@ -98,87 +69,95 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
-// 🔐 LOGIN REAL
-function login() {
-  let email = document.getElementById("user").value;
-  let password = document.getElementById("pass").value;
-
-  firebase.auth().signInWithEmailAndPassword(email, password)
-    .then(() => {
-      document.getElementById("login").style.display = "none";
-      document.getElementById("app").style.display = "block";
-      cargar();
-    })
-    .catch(error => {
-      alert("Error: " + error.message);
-    });
+// LOGIN
+function login(){
+  firebase.auth().signInWithEmailAndPassword(
+    user.value, pass.value
+  ).then(()=>{
+    login.style.display="none";
+    app.style.display="block";
+    cargar();
+  }).catch(e=>alert(e.message));
 }
 
-// 💰 GUARDAR
-async function guardar() {
-  let nombre = document.getElementById("nombre").value;
-  let monto = parseFloat(document.getElementById("monto").value);
-  let interes = parseFloat(document.getElementById("interes").value);
-
-  if (!nombre || !monto || !interes) {
-    alert("Completa todos los campos");
-    return;
-  }
+// GUARDAR
+async function guardar(){
+  let monto = parseFloat(montoInput.value || monto.value);
+  let interes = parseFloat(interesInput.value || interes.value);
+  let dias = parseInt(document.getElementById("dias").value);
 
   let total = monto + (monto * interes / 100);
 
+  let fecha = new Date();
+  let fechaPago = new Date();
+  fechaPago.setDate(fecha.getDate() + dias);
+
   await db.collection("prestamos").add({
-    nombre,
+    nombre: nombre.value,
     monto,
     interes,
-    total
+    total,
+    fecha: fecha.toISOString(),
+    fechaPago: fechaPago.toISOString(),
+    estado: "pendiente"
   });
 
   alert("Guardado ✔️");
-
-  document.getElementById("nombre").value = "";
-  document.getElementById("monto").value = "";
-  document.getElementById("interes").value = "";
-
   cargar();
 }
 
-// 📋 CARGAR + GANANCIAS
-async function cargar() {
-  let lista = document.getElementById("lista");
-  let totalGanancia = 0;
-
-  lista.innerHTML = "";
-
+// CARGAR
+async function cargar(){
   let datos = await db.collection("prestamos").get();
 
-  datos.forEach(doc => {
+  let totalGanancia=0, totalPrestado=0, pendientes=0;
+  lista.innerHTML="";
+
+  datos.forEach(doc=>{
     let d = doc.data();
 
     let ganancia = d.total - d.monto;
     totalGanancia += ganancia;
+    totalPrestado += d.monto;
+
+    let hoy = new Date();
+    let pago = new Date(d.fechaPago);
+    let vencido = hoy > pago;
+
+    if(d.estado==="pendiente") pendientes++;
 
     lista.innerHTML += `
       <div class="card">
         👤 ${d.nombre}<br>
-        💵 $${d.monto}<br>
+        💵 ${d.monto}<br>
         📈 ${d.interes}%<br>
-        💰 Total: $${d.total}<br>
-        🟢 Ganancia: $${ganancia}<br>
+        💰 ${d.total}<br>
+        📅 Pago: ${pago.toLocaleDateString()}<br>
+        ${vencido ? '<span class="alerta">⚠️ VENCIDO</span><br>' : ''}
+        <button onclick="pagar('${doc.id}')">Pagar</button>
         <button class="delete" onclick="eliminar('${doc.id}')">Eliminar</button>
       </div>
     `;
   });
 
-  document.getElementById("gananciaTotal").innerText = totalGanancia;
+  gananciaTotal.innerText = totalGanancia;
+  totalPrestado.innerText = totalPrestado;
+  document.getElementById("pendientes").innerText = pendientes;
 }
 
-// ❌ ELIMINAR
-async function eliminar(id) {
-  await db.collection("prestamos").doc(id).delete();
+// PAGAR
+async function pagar(id){
+  await db.collection("prestamos").doc(id).update({
+    estado:"pagado"
+  });
   cargar();
 }
 
+// ELIMINAR
+async function eliminar(id){
+  await db.collection("prestamos").doc(id).delete();
+  cargar();
+}
 </script>
 
 </body>
