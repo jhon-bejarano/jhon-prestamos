@@ -2,9 +2,8 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>J.B Capital</title>
+<title>J.B Capital - Admin</title>
 
-<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
@@ -18,31 +17,27 @@ body {
 }
 
 .app {
-  max-width:420px;
+  max-width:500px;
   margin:auto;
   padding:20px;
 }
 
-/* HEADER */
 .header {
   background: linear-gradient(135deg,#22c55e,#16a34a);
   padding:20px;
   border-radius:15px;
-  margin-bottom:15px;
   text-align:center;
-  box-shadow:0 8px 25px rgba(0,0,0,0.4);
+  margin-bottom:15px;
 }
 
-/* PANEL */
-.panel {
+.panel, .card {
   background:#1e293b;
   padding:15px;
   border-radius:12px;
-  margin-bottom:15px;
+  margin-bottom:10px;
 }
 
-/* INPUTS */
-input {
+input, select {
   width:100%;
   padding:12px;
   margin:6px 0;
@@ -52,7 +47,6 @@ input {
   color:white;
 }
 
-/* BOTONES */
 button {
   width:100%;
   padding:12px;
@@ -68,15 +62,6 @@ button {
 .btn-orange { background:#f59e0b; }
 .btn-red { background:#ef4444; }
 
-/* CARDS */
-.card {
-  background:#1e293b;
-  padding:15px;
-  border-radius:12px;
-  margin-top:10px;
-}
-
-/* ALERTA */
 .alerta {
   color:#f87171;
   font-weight:bold;
@@ -90,8 +75,8 @@ button {
 
 <!-- LOGIN -->
 <div id="login">
-  <h2>🔐 Iniciar sesión</h2>
-  <input id="user" placeholder="Correo">
+  <h2>🔐 Admin Login</h2>
+  <input id="email" placeholder="Correo">
   <input id="pass" type="password" placeholder="Contraseña">
   <button class="btn-main" onclick="login()">Entrar</button>
 </div>
@@ -100,30 +85,32 @@ button {
 <div id="app" style="display:none">
 
 <div class="header">
-  <h1>💰 J.B Capital</h1>
-  <p>Gestión de préstamos</p>
+  <h1>💰 J.B Capital Admin</h1>
 </div>
 
 <div class="panel">
-  <h3>💵 Ganancia: $<span id="gananciaTotal">0</span></h3>
-  <h3>📊 Prestado: $<span id="totalPrestado">0</span></h3>
-  <h3>⚠️ Pendientes: <span id="pendientes">0</span></h3>
-  <h3>📅 Hoy: $<span id="hoy">0</span></h3>
+  <h3>📋 Crear préstamo</h3>
+
+  <!-- CLIENTE SELECCIONADO -->
+  <select id="clienteId">
+    <option value="">Seleccionar cliente</option>
+  </select>
+
+  <input id="nombre" placeholder="Nombre">
+  <input id="telefono" placeholder="Teléfono">
+  <input id="monto" placeholder="Monto">
+  <input id="interes" placeholder="Interés %">
+  <input id="dias" placeholder="Días">
+  <input id="cuotas" placeholder="Cuotas">
+
+  <button class="btn-main" onclick="guardar()">Guardar préstamo</button>
 </div>
 
-<input id="nombre" placeholder="Nombre">
-<input id="telefono" placeholder="Teléfono">
-<input id="monto" placeholder="Monto">
-<input id="interes" placeholder="Interés %">
-<input id="dias" placeholder="Días">
-<input id="cuotas" placeholder="Cuotas">
+<div class="panel">
+  <button class="btn-blue" onclick="cargar()">Ver préstamos</button>
+</div>
 
-<button class="btn-main" onclick="guardar()">Guardar</button>
-<button class="btn-blue" onclick="cargar()">Ver todos</button>
-<button class="btn-orange" onclick="verVencidos()">Vencidos</button>
-<button class="btn-red" onclick="recordar()">Recordar</button>
-
-<h2>📋 Lista</h2>
+<h3>📋 Lista</h3>
 <div id="lista"></div>
 
 </div>
@@ -139,29 +126,54 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+
+const auth = firebase.auth();
 const db = firebase.firestore();
 
-// LOGIN CORREGIDO
-function login(){
-  const email = document.getElementById("user").value;
-  const password = document.getElementById("pass").value;
+let lista = document.getElementById("lista");
 
-  firebase.auth().signInWithEmailAndPassword(email, password)
+// LOGIN
+function login(){
+  let email = document.getElementById("email").value;
+  let pass = document.getElementById("pass").value;
+
+  auth.signInWithEmailAndPassword(email, pass)
   .then(()=>{
     document.getElementById("login").style.display="none";
     document.getElementById("app").style.display="block";
+    cargarClientes();
     cargar();
   })
-  .catch(e=>{
-    alert("Error: " + e.message);
-    console.log(e);
+  .catch(e=>alert(e.message));
+}
+
+function val(id){
+  return document.getElementById(id).value;
+}
+
+// 🔵 CARGAR CLIENTES EN DROPDOWN
+async function cargarClientes(){
+
+  let select = document.getElementById("clienteId");
+  select.innerHTML = `<option value="">Seleccionar cliente</option>`;
+
+  let clientes = await db.collection("clientes").get();
+
+  clientes.forEach(doc=>{
+    let c = doc.data();
+
+    select.innerHTML += `
+      <option value="${c.uid}">
+        ${c.nombre} - ${c.telefono}
+      </option>
+    `;
   });
 }
 
-// GUARDAR
+// 💰 GUARDAR PRÉSTAMO
 async function guardar(){
-  let user = firebase.auth().currentUser;
 
+  let clienteId = val("clienteId");
   let nombre = val("nombre");
   let telefono = val("telefono");
   let monto = parseFloat(val("monto"));
@@ -169,7 +181,7 @@ async function guardar(){
   let dias = parseInt(val("dias"));
   let cuotas = parseInt(val("cuotas"));
 
-  if(!nombre||!telefono||!monto||!interes||!dias||!cuotas){
+  if(!clienteId || !nombre || !telefono || !monto || !interes || !dias || !cuotas){
     alert("Completa todo");
     return;
   }
@@ -182,128 +194,56 @@ async function guardar(){
   pago.setDate(f.getDate() + dias);
 
   await db.collection("prestamos").add({
-    nombre, telefono, monto, interes, total,
-    cuotas, cuotaValor, pagadas:0,
-    fecha:f.toISOString(),
-    fechaPago:pago.toISOString(),
-    estado:"pendiente",
-    userId:user.uid
+    clienteId,
+    nombre,
+    telefono,
+    monto,
+    interes,
+    total,
+    cuotas,
+    cuotaValor,
+    pagadas:0,
+    fecha: f.toISOString(),
+    fechaPago: pago.toISOString(),
+    estado:"pendiente"
   });
 
-  alert("Guardado ✔️");
+  alert("Préstamo creado ✔️");
+
   document.querySelectorAll("input").forEach(i=>i.value="");
   cargar();
 }
 
-function val(id){
-  return document.getElementById(id).value;
-}
-
-// CARGAR
+// 📋 CARGAR PRÉSTAMOS
 async function cargar(){
-  let user = firebase.auth().currentUser;
 
-  let datos = await db.collection("prestamos")
-    .where("userId","==",user.uid).get();
+  let datos = await db.collection("prestamos").get();
 
-  let g=0,tp=0,p=0,h=0;
-  let hoyFecha=new Date().toDateString();
-
-  lista.innerHTML="";
+  lista.innerHTML = "";
 
   datos.forEach(doc=>{
-    let d=doc.data();
+    let d = doc.data();
 
-    let gan=d.total-d.monto;
-    g+=gan; tp+=d.monto;
+    let vencido = new Date() > new Date(d.fechaPago);
 
-    if(new Date(d.fecha).toDateString()===hoyFecha){
-      h+=gan;
-    }
-
-    let vencido=new Date()>new Date(d.fechaPago);
-    if(d.estado==="pendiente") p++;
-
-    lista.innerHTML+=`
+    lista.innerHTML += `
     <div class="card">
+
       <b>${d.nombre}</b><br>
       📞 ${d.telefono}<br>
-      💵 $${d.monto} → 💰 $${d.total}<br>
-      📅 ${new Date(d.fechaPago).toLocaleDateString()}<br>
-      🧾 ${d.pagadas}/${d.cuotas} | $${Math.round(d.cuotaValor)}<br>
-      ${vencido&&d.estado==="pendiente"?'<span class="alerta">⚠️ VENCIDO</span><br>':''}
+      💵 $${d.monto} → $${d.total}<br>
+      📅 Vence: ${new Date(d.fechaPago).toLocaleDateString()}<br>
+      🧾 ${d.pagadas}/${d.cuotas}<br>
 
-      <a href="https://wa.me/573208202344?text=Hola ${d.nombre}, debes $${d.total}" target="_blank">
+      ${vencido ? '<span class="alerta">⚠️ VENCIDO</span><br>' : ''}
+
+      <a href="https://wa.me/57${d.telefono}?text=Hola ${d.nombre}, debes $${d.total}" target="_blank">
         <button class="btn-blue">Cobrar</button>
       </a>
 
-      <button class="btn-main" onclick="pagarCuota('${doc.id}',${d.pagadas})">Cuota</button>
-      <button class="btn-orange" onclick="pagar('${doc.id}')">Pagado</button>
-      <button class="btn-red" onclick="eliminar('${doc.id}')">Eliminar</button>
-    </div>`;
+    </div>
+    `;
   });
-
-  gananciaTotal.innerText=g;
-  totalPrestado.innerText=tp;
-  pendientes.innerText=p;
-  hoy.innerText=h;
-}
-
-// VENCIDOS
-async function verVencidos(){
-  let user=firebase.auth().currentUser;
-
-  let datos=await db.collection("prestamos")
-    .where("userId","==",user.uid).get();
-
-  lista.innerHTML="";
-  let hoy=new Date();
-
-  datos.forEach(doc=>{
-    let d=doc.data();
-    if(hoy>new Date(d.fechaPago)&&d.estado==="pendiente"){
-      lista.innerHTML+=`<div class="card alerta">${d.nombre} debe $${d.total}</div>`;
-    }
-  });
-}
-
-// RECORDAR
-async function recordar(){
-  let user=firebase.auth().currentUser;
-
-  let datos=await db.collection("prestamos")
-    .where("userId","==",user.uid).get();
-
-  let hoy=new Date();
-
-  datos.forEach(doc=>{
-    let d=doc.data();
-    if(hoy>new Date(d.fechaPago)&&d.estado==="pendiente"){
-      window.open(`https://wa.me/57${d.telefono}?text=Hola ${d.nombre}, debes $${d.total}`,"_blank");
-    }
-  });
-}
-
-// PAGAR CUOTA
-async function pagarCuota(id,pagadas){
-  await db.collection("prestamos").doc(id).update({
-    pagadas:pagadas+1
-  });
-  cargar();
-}
-
-// PAGAR TOTAL
-async function pagar(id){
-  await db.collection("prestamos").doc(id).update({
-    estado:"pagado"
-  });
-  cargar();
-}
-
-// ELIMINAR
-async function eliminar(id){
-  await db.collection("prestamos").doc(id).delete();
-  cargar();
 }
 
 </script>
