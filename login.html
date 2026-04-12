@@ -32,12 +32,16 @@ button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;bac
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyXXXXX...", ✅
+  apiKey: "PEGA_AQUI_TU_API_REAL_COMPLETA",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-firebase.initializeApp(firebaseConfig);
+// 🔥 evitar doble inicialización
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+
 const auth = firebase.auth();
 
 async function login(){
