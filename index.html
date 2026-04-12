@@ -4,48 +4,6 @@
 <meta charset="UTF-8">
 <title>J.B Préstamos</title>
 
-<style>
-  body {
-    margin: 0;
-    font-family: Arial;
-    background: #0f172a;
-    color: white;
-    display: flex;
-    justify-content: center;
-    min-height: 100vh;
-  }
-
-  .app {
-    width: 100%;
-    max-width: 420px;
-    text-align: center;
-    padding: 20px;
-  }
-
-  input, button {
-    width: 90%;
-    padding: 10px;
-    margin: 5px;
-    border-radius: 6px;
-    border: none;
-  }
-
-  button {
-    background: green;
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
-  }
-
-  .card {
-    background: #111827;
-    margin-top: 10px;
-    padding: 10px;
-    border-radius: 8px;
-  }
-</style>
-
-<!-- FIREBASE (SOLO UNA VEZ) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
@@ -53,75 +11,44 @@
 
 <body>
 
-<div class="app">
+<h1>J.B Préstamos</h1>
 
-  <h1>💰 J.B Préstamos</h1>
+<input id="nombre" placeholder="Nombre">
+<input id="monto" placeholder="Monto">
 
-  <input id="nombre" placeholder="Nombre del cliente">
-  <input id="monto" placeholder="Monto del préstamo">
+<button onclick="guardar()">Guardar</button>
 
-  <button id="btnGuardar">Guardar préstamo</button>
-
-  <h2>📋 Lista</h2>
-  <div id="lista"></div>
-
-</div>
+<div id="lista"></div>
 
 <script>
-  alert("SCRIPT CARGADO");
+alert("APP OK");
 
-  // 🔥 SOLO UN FIREBASE (EL CORRECTO)
-  const firebaseConfig = {
-    apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
-    authDomain: "jb-prestamos.firebaseapp.com",
-    projectId: "jb-prestamos",
-    storageBucket: "jb-prestamos.appspot.com",
-    messagingSenderId: "45452353450",
-    appId: "1:45452353450:web:caaca5cf8ecf494043d5d3"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
+  authDomain: "jb-prestamos.firebaseapp.com",
+  projectId: "jb-prestamos"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  // 🔥 GUARDAR
-  document.getElementById("btnGuardar").onclick = async function () {
-    alert("CLICK DETECTADO");
+async function guardar() {
+  let nombre = document.getElementById("nombre").value;
+  let monto = document.getElementById("monto").value;
 
-    let nombre = document.getElementById("nombre").value;
-    let monto = document.getElementById("monto").value;
-
-    try {
-  await db.collection("prestamos").add({
-    nombre,
-    monto
-  });
-
-  alert("GUARDADO REAL ✔️");
-
-} catch (error) {
-  alert("ERROR FIREBASE: " + error.message);
-  console.log(error);
-}
-
-  // 🔥 CARGAR
-  async function cargar() {
-    let lista = document.getElementById("lista");
-    lista.innerHTML = "";
-
-    let datos = await db.collection("prestamos").get();
-
-    datos.forEach(doc => {
-      let d = doc.data();
-
-      lista.innerHTML += `
-        <div class="card">
-          👤 ${d.nombre} - 💵 ${d.monto}
-        </div>
-      `;
+  try {
+    await db.collection("prestamos").add({
+      nombre,
+      monto
     });
-  }
 
-  cargar();
+    alert("GUARDADO ✔️");
+
+  } catch (error) {
+    alert("ERROR: " + error.message);
+    console.log(error);
+  }
+}
 </script>
 
 </body>
