@@ -44,16 +44,9 @@ button{
   cursor:pointer;
   font-weight:bold;
 }
-.btn{
-  background:#22c55e;
-}
-.logout{
-  background:#ef4444;
-}
-.alerta{
-  color:#f87171;
-  font-weight:bold;
-}
+.btn{ background:#22c55e; }
+.logout{ background:#ef4444; }
+.alerta{ color:#f87171; font-weight:bold; }
 </style>
 
 </head>
@@ -65,12 +58,10 @@ button{
 <h2>💰 Cliente</h2>
 <p id="user"></p>
 
-<!-- CUPO -->
 <div class="card">
 <h3>💳 Cupo disponible: COP $100.000</h3>
 </div>
 
-<!-- SOLICITAR -->
 <div class="card">
 <h3>Solicitar préstamo</h3>
 
@@ -86,7 +77,12 @@ button{
 <button class="btn" onclick="solicitar()">Solicitar</button>
 </div>
 
-<!-- LISTA -->
+<div class="card">
+<h3>📊 Resumen</h3>
+<p>💰 Interés + recargo: <span id="interes">COP $0</span></p>
+<p>💵 Total a pagar: <span id="total">COP $0</span></p>
+</div>
+
 <div class="card">
 <h3>Mis préstamos</h3>
 <div id="lista"></div>
@@ -98,16 +94,14 @@ button{
 
 <script>
 
-// 🔥 CONFIG FIREBASE
+// 🔥 FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -119,7 +113,7 @@ function formatoCOP(valor){
   return "COP $" + valor.toLocaleString("es-CO");
 }
 
-// 🔐 VALIDAR USUARIO
+// 🔐 LOGIN
 auth.onAuthStateChanged(async (user)=>{
 
   if(!user){
@@ -132,16 +126,14 @@ auth.onAuthStateChanged(async (user)=>{
   cargarPrestamos(user.uid);
 });
 
-// 📊 CARGAR PRÉSTAMOS
+// 📊 CARGAR
 async function cargarPrestamos(uid){
 
-  lista.innerHTML = "Cargando...";
+  lista.innerHTML = "";
 
   let datos = await db.collection("prestamos")
     .where("userId","==",uid)
     .get();
-
-  lista.innerHTML = "";
 
   if(datos.empty){
     lista.innerHTML = "<p>No tienes préstamos</p>";
@@ -151,21 +143,34 @@ async function cargarPrestamos(uid){
   datos.forEach(doc=>{
     let d = doc.data();
 
-    let hoy = new Date();
-    let vencido = hoy > new Date(d.fechaVencimiento);
-
     lista.innerHTML += `
       <div class="card">
         💵 ${formatoCOP(d.monto)}<br>
+        💰 Interés: ${formatoCOP(d.interes)}<br>
+        ➕ Recargo: ${formatoCOP(d.recargo || 0)}<br>
+        📊 Total: ${formatoCOP(d.total)}<br>
         📊 Estado: ${d.estado}<br>
         📆 Días: ${d.dias}<br>
         📅 Solicitud: ${new Date(d.fecha).toLocaleDateString()}<br>
         ⏳ Vence: ${new Date(d.fechaVencimiento).toLocaleDateString()}<br>
-        🧾 Cuotas: ${d.pagadas || 0}/${d.cuotas}<br>
-        ${vencido && d.estado==="pendiente" ? '<span class="alerta">⚠️ VENCIDO</span>' : ''}
       </div>
     `;
   });
+}
+
+// 🧠 CALCULAR
+function calcular(){
+
+  let monto = parseFloat(document.getElementById("monto").value) || 0;
+  let dias = parseInt(document.getElementById("dias").value);
+
+  let interes = monto * 0.20;
+  let recargo = dias === 20 ? 8000 : 0;
+
+  let total = monto + interes + recargo;
+
+  document.getElementById("interes").innerText = formatoCOP(interes + recargo);
+  document.getElementById("total").innerText = formatoCOP(total);
 }
 
 // 🟢 SOLICITAR
@@ -182,60 +187,53 @@ async function solicitar(){
     return;
   }
 
-  // 🔒 VALIDACIONES
   if(monto > 100000){
-    alert("❌ Máximo permitido: COP $100.000");
+    alert("Máximo: COP $100.000");
     return;
   }
 
   if(cuotas > 1){
-    alert("❌ Solo se permite 1 cuota");
+    alert("Solo 1 cuota");
     return;
   }
 
-  if(dias !== 15 && dias !== 20){
-    alert("❌ Solo se permiten 15 o 20 días");
-    return;
-  }
+  let interes = monto * 0.20;
+  let recargo = dias === 20 ? 8000 : 0;
+  let total = monto + interes + recargo;
 
   let hoy = new Date();
   let vencimiento = new Date();
   vencimiento.setDate(hoy.getDate() + dias);
 
-  try{
+  await db.collection("prestamos").add({
+    userId: user.uid,
+    monto,
+    cuotas,
+    dias,
+    interes,
+    recargo,
+    total,
+    estado: "pendiente",
+    fecha: hoy.toISOString(),
+    fechaVencimiento: vencimiento.toISOString()
+  });
 
-    await db.collection("prestamos").add({
-      userId: user.uid,
-      monto,
-      cuotas,
-      dias,
-      pagadas: 0,
-      estado: "pendiente",
-      fecha: hoy.toISOString(),
-      fechaVencimiento: vencimiento.toISOString()
-    });
+  alert("Solicitud enviada ✔️");
 
-    alert("Solicitud enviada ✔️");
-
-    cargarPrestamos(user.uid);
-
-  }catch(e){
-    alert("Error: " + e.message);
-  }
+  cargarPrestamos(user.uid);
 }
 
-// 🚫 BLOQUEO EN TIEMPO REAL
+// 🚫 BLOQUEOS
 document.getElementById("monto").addEventListener("input", function(){
-  if(this.value > 100000){
-    this.value = 100000;
-  }
+  if(this.value > 100000) this.value = 100000;
+  calcular();
 });
 
 document.getElementById("cuotas").addEventListener("input", function(){
-  if(this.value > 1){
-    this.value = 1;
-  }
+  if(this.value > 1) this.value = 1;
 });
+
+document.getElementById("dias").addEventListener("change", calcular);
 
 // 🚪 LOGOUT
 function logout(){
