@@ -8,59 +8,85 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
-body{background:#0f172a;color:white;font-family:Arial;}
-.card{background:#1e293b;padding:15px;border-radius:12px;margin:10px;}
+body{background:#0f172a;color:white;font-family:Arial;padding:20px;}
+.card{background:#1e293b;padding:15px;margin-top:10px;border-radius:10px;}
+button{margin-top:5px;padding:10px;width:100%;}
 </style>
+
 </head>
 
 <body>
 
 <h2>💰 Cliente</h2>
 <p id="user"></p>
+
+<h3>Solicitar préstamo</h3>
+<input id="monto" placeholder="Monto">
+<input id="cuotas" placeholder="Cuotas">
+<button onclick="solicitar()">Solicitar</button>
+
+<h3>Mis préstamos</h3>
 <div id="lista"></div>
 
+<button onclick="logout()">Cerrar sesión</button>
+
 <script>
+
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
-auth.onAuthStateChanged(user=>{
-  if(!user){
-    window.location.href="login.html";
-    return;
-  }
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-  document.getElementById("user").innerText=user.email;
+auth.onAuthStateChanged(async user=>{
+  if(!user) return location.href="login.html";
 
-  db.collection("prestamos")
-  .where("clienteId","==",user.uid)
-  .get()
-  .then(d=>{
-    let lista=document.getElementById("lista");
-    lista.innerHTML="";
+  user = user;
+  document.getElementById("user").innerText = user.email;
 
-    if(d.empty){
-      lista.innerHTML="No tienes préstamos";
-      return;
-    }
+  let datos = await db.collection("prestamos")
+    .where("userId","==",user.uid).get();
 
-    d.forEach(doc=>{
-      let x=doc.data();
+  let lista = document.getElementById("lista");
+  lista.innerHTML="";
 
-      lista.innerHTML+=`
+  datos.forEach(doc=>{
+    let d = doc.data();
+    lista.innerHTML += `
       <div class="card">
-        💵 $${x.monto}<br>
-        💰 Total: $${x.total}
-      </div>`;
-    });
+        $${d.monto} | ${d.estado}
+      </div>
+    `;
   });
 });
+
+async function solicitar(){
+  let user = auth.currentUser;
+
+  let monto = monto.value;
+  let cuotas = cuotas.value;
+
+  await db.collection("prestamos").add({
+    userId:user.uid,
+    monto:parseFloat(monto),
+    cuotas:parseInt(cuotas),
+    estado:"pendiente"
+  });
+
+  alert("Solicitud enviada");
+  location.reload();
+}
+
+function logout(){
+  auth.signOut();
+  location.href="login.html";
+}
+
 </script>
 
 </body>
