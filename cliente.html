@@ -21,13 +21,14 @@ body{background:#0f172a;color:white;font-family:Arial;}
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyXXXXX...", ✅
+  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
-firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
-const db=firebase.firestore();
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
 auth.onAuthStateChanged(user=>{
   if(!user){
