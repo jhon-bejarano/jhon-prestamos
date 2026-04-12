@@ -72,10 +72,11 @@ const db = firebase.firestore();
 // LOGIN
 function login(){
   firebase.auth().signInWithEmailAndPassword(
-    user.value, pass.value
+    document.getElementById("user").value,
+    document.getElementById("pass").value
   ).then(()=>{
-    login.style.display="none";
-    app.style.display="block";
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").style.display = "block";
     cargar();
   }).catch(e=>alert(e.message));
 }
