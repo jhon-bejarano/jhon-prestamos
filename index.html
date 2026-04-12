@@ -50,6 +50,7 @@ button { background:green; color:white; font-weight:bold; cursor:pointer; }
 <h3>📅 Hoy ganaste: $<span id="hoy">0</span></h3>
 
 <input id="nombre" placeholder="Nombre">
+<input id="telefono" placeholder="Teléfono cliente (ej: 573001234567)">
 <input id="monto" placeholder="Monto">
 <input id="interes" placeholder="Interés %">
 <input id="dias" placeholder="Días para pagar">
@@ -93,12 +94,15 @@ function login(){
 
 // 💾 GUARDAR
 async function guardar(){
+  let user = firebase.auth().currentUser;
+
   let nombre = document.getElementById("nombre").value;
+  let telefono = document.getElementById("telefono").value;
   let monto = parseFloat(document.getElementById("monto").value);
   let interes = parseFloat(document.getElementById("interes").value);
   let dias = parseInt(document.getElementById("dias").value);
 
-  if (!nombre || !monto || !interes || !dias) {
+  if (!nombre || !telefono || !monto || !interes || !dias) {
     alert("Completa todos los campos");
     return;
   }
@@ -111,17 +115,20 @@ async function guardar(){
 
   await db.collection("prestamos").add({
     nombre,
+    telefono,
     monto,
     interes,
     total,
     fecha: fecha.toISOString(),
     fechaPago: fechaPago.toISOString(),
-    estado: "pendiente"
+    estado: "pendiente",
+    userId: user.uid
   });
 
   alert("Guardado ✔️");
 
   document.getElementById("nombre").value = "";
+  document.getElementById("telefono").value = "";
   document.getElementById("monto").value = "";
   document.getElementById("interes").value = "";
   document.getElementById("dias").value = "";
@@ -129,9 +136,13 @@ async function guardar(){
   cargar();
 }
 
-// 📋 CARGAR TODO
+// 📋 CARGAR
 async function cargar(){
-  let datos = await db.collection("prestamos").get();
+  let user = firebase.auth().currentUser;
+
+  let datos = await db.collection("prestamos")
+    .where("userId", "==", user.uid)
+    .get();
 
   let totalGanancia=0, totalPrestado=0, pendientes=0;
   let gananciaHoy=0;
@@ -160,11 +171,17 @@ async function cargar(){
     lista.innerHTML += `
       <div class="card">
         👤 ${d.nombre}<br>
+        📞 ${d.telefono}<br>
         💵 $${d.monto}<br>
         📈 ${d.interes}%<br>
         💰 $${d.total}<br>
         📅 Pago: ${pago.toLocaleDateString()}<br>
         ${vencido && d.estado==="pendiente" ? '<span class="alerta">⚠️ VENCIDO</span><br>' : ''}
+
+        <a href="https://wa.me/573208202344?text=Hola%20${d.nombre},%20te%20recuerdo%20tu%20pago%20de%20$${d.total}" target="_blank">
+          <button>📲 Cobrar</button>
+        </a>
+
         <button onclick="pagar('${doc.id}')">Pagar</button>
         <button class="delete" onclick="eliminar('${doc.id}')">Eliminar</button>
       </div>
@@ -177,11 +194,16 @@ async function cargar(){
   document.getElementById("hoy").innerText = gananciaHoy;
 }
 
-// ⚠️ SOLO VENCIDOS
+// ⚠️ VENCIDOS
 async function verVencidos(){
-  let datos = await db.collection("prestamos").get();
+  let user = firebase.auth().currentUser;
+
+  let datos = await db.collection("prestamos")
+    .where("userId", "==", user.uid)
+    .get();
+
   let lista = document.getElementById("lista");
-  lista.innerHTML = "";
+  lista.innerHTML="";
 
   let hoy = new Date();
 
@@ -189,10 +211,11 @@ async function verVencidos(){
     let d = doc.data();
     let pago = new Date(d.fechaPago);
 
-    if(hoy > pago && d.estado === "pendiente"){
+    if(hoy > pago && d.estado==="pendiente"){
       lista.innerHTML += `
         <div class="card">
           👤 ${d.nombre}<br>
+          📞 ${d.telefono}<br>
           💰 $${d.total}<br>
           ⚠️ VENCIDO
         </div>
