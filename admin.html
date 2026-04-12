@@ -64,6 +64,7 @@ button{
 
 <script>
 
+// 🔥 CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
@@ -72,14 +73,25 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 
+const auth = firebase.auth();
 const db = firebase.firestore();
+
+// 🔐 SEGURIDAD ADMIN
+auth.onAuthStateChanged(user=>{
+  if(!user || user.email !== "bjhon1994@gmail.com"){
+    alert("Acceso denegado");
+    window.location.href="login.html";
+  }else{
+    cargar();
+  }
+});
 
 // 💰 FORMATO
 function cop(n){
   return "COP $" + n.toLocaleString("es-CO");
 }
 
-// 🔄 CARGAR TODO
+// 🔄 CARGAR TODO + CLIENTES
 async function cargar(){
 
   let datos = await db.collection("prestamos").get();
@@ -87,35 +99,89 @@ async function cargar(){
   let g=0, p=0, pen=0;
   lista.innerHTML="";
 
-  datos.forEach(doc=>{
+  for(const doc of datos.docs){
+
     let d = doc.data();
 
     g += d.interes + (d.recargo||0);
     p += d.monto;
     if(d.estado==="pendiente") pen++;
 
+    // 👤 TRAER CLIENTE
+    let clienteDoc = await db.collection("clientes").doc(d.userId).get();
+    let cliente = clienteDoc.exists ? clienteDoc.data() : {};
+
+    let nombre = cliente.nombre || "Sin nombre";
+    let telefono = cliente.telefono || "";
+    let email = cliente.email || "";
+
     let vencido = new Date() > new Date(d.fechaVencimiento);
 
     lista.innerHTML += `
     <div class="card">
+
+      👤 ${nombre}<br>
+      📧 ${email}<br>
+      📱 ${telefono}<br><br>
+
       💵 ${cop(d.monto)}<br>
-      💰 ${cop(d.total)}<br>
-      📊 ${d.estado}<br>
+      💰 Total: ${cop(d.total)}<br>
+      📊 Estado: ${d.estado.toUpperCase()}<br>
       📆 ${d.dias} días<br>
-      ${vencido && d.estado==="pendiente" ? '<span class="alerta">⚠️ VENCIDO</span><br>' : ''}
 
-      <a href="https://wa.me/?text=Debes ${cop(d.total)}" target="_blank">
-        <button class="blue">Cobrar</button>
-      </a>
+      ${vencido && d.estado==="aprobado" ? '<span class="alerta">⚠️ VENCIDO</span><br>' : ''}
 
-      <button class="green" onclick="pagado('${doc.id}')">Pagado</button>
+      ${telefono ? `
+      <a href="https://wa.me/57${telefono}?text=Hola ${nombre}, tienes un préstamo pendiente de ${cop(d.total)}" target="_blank">
+        <button class="blue">Cobrar por WhatsApp</button>
+      </a>` : ""}
+
+      ${d.estado==="pendiente" ? 
+        `<button class="blue" onclick="aprobar('${doc.id}')">Aprobar</button>` : ""}
+
+      ${d.estado==="aprobado" ? 
+        `<button class="green" onclick="pagado('${doc.id}')">Pagado</button>` : ""}
+
       <button class="red" onclick="eliminar('${doc.id}')">Eliminar</button>
+
     </div>`;
-  });
+  }
 
   ganancia.innerText = cop(g);
   prestado.innerText = cop(p);
   pendientes.innerText = pen;
+}
+
+// ✅ APROBAR
+async function aprobar(id){
+  await db.collection("prestamos").doc(id).update({
+    estado:"aprobado"
+  });
+  cargar();
+}
+
+// 💰 PAGADO
+async function pagado(id){
+
+  let ref = db.collection("prestamos").doc(id);
+  let doc = await ref.get();
+
+  if(doc.data().estado !== "aprobado"){
+    alert("Primero debes aprobar");
+    return;
+  }
+
+  await ref.update({
+    estado:"pagado"
+  });
+
+  cargar();
+}
+
+// ❌ ELIMINAR
+async function eliminar(id){
+  await db.collection("prestamos").doc(id).delete();
+  cargar();
 }
 
 // ⚠️ VENCIDOS
@@ -124,30 +190,17 @@ async function verVencidos(){
   let datos = await db.collection("prestamos").get();
   lista.innerHTML="";
 
-  datos.forEach(doc=>{
+  for(const doc of datos.docs){
+
     let d = doc.data();
 
-    if(new Date()>new Date(d.fechaVencimiento) && d.estado==="pendiente"){
+    if(new Date()>new Date(d.fechaVencimiento) && d.estado==="aprobado"){
       lista.innerHTML+=`
       <div class="card alerta">
         ⚠️ ${cop(d.total)} vencido
       </div>`;
     }
-  });
-}
-
-// ✅ PAGADO
-async function pagado(id){
-  await db.collection("prestamos").doc(id).update({
-    estado:"pagado"
-  });
-  cargar();
-}
-
-// ❌ ELIMINAR
-async function eliminar(id){
-  await db.collection("prestamos").doc(id).delete();
-  cargar();
+  }
 }
 
 </script>
