@@ -2,54 +2,38 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Login</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 
-<style>
-body{margin:0;font-family:Arial;background:#0f172a;color:white;}
-.container{max-width:400px;margin:auto;padding:25px;}
-.card{background:#1e293b;padding:20px;border-radius:12px;}
-input{width:100%;padding:12px;margin:6px 0;border:none;border-radius:8px;background:#020617;color:white;}
-button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;background:#3b82f6;color:white;font-weight:bold;}
-</style>
 </head>
 
 <body>
-<div class="container">
-<div class="card">
 
-<h2>🔵 Login</h2>
+<h2>Login</h2>
 
 <input id="email" placeholder="Correo">
 <input id="password" type="password" placeholder="Contraseña">
 
 <button onclick="login()">Entrar</button>
 
-</div>
-</div>
-
 <script>
+
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 
 const auth = firebase.auth();
 
 async function login(){
-
-  let email = document.getElementById("email").value;
-  let password = document.getElementById("password").value;
+  let email = email.value;
+  let password = password.value;
 
   try{
-
     let user = await auth.signInWithEmailAndPassword(email,password);
 
     if(user.user.email === "bjhon1994@gmail.com"){
@@ -62,6 +46,8 @@ async function login(){
     alert(e.message);
   }
 }
+
 </script>
+
 </body>
 </html>
