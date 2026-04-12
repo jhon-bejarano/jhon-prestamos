@@ -2,112 +2,30 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>J.B Capital Admin</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
-body {
-  margin:0;
-  font-family:Arial;
-  background:#0f172a;
-  color:white;
-}
-
-.app {
-  max-width:520px;
-  margin:auto;
-  padding:20px;
-}
-
-.card {
-  background:#1e293b;
-  padding:15px;
-  border-radius:12px;
-  margin-bottom:10px;
-}
-
-input, select {
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  border:none;
-  border-radius:8px;
-  background:#020617;
-  color:white;
-}
-
-button {
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.green{background:#22c55e;}
-.blue{background:#3b82f6;}
-.orange{background:#f59e0b;}
-.red{background:#ef4444;}
-
-.alerta{
-  color:#f87171;
-  font-weight:bold;
-}
+body{background:#0f172a;color:white;font-family:Arial;}
+input,select{width:100%;padding:10px;margin:5px;}
+button{padding:10px;background:#22c55e;color:white;}
 </style>
 </head>
 
 <body>
 
-<div class="app">
+<h2>💰 Admin</h2>
 
-<!-- LOGIN -->
-<div id="login">
-  <h2>🔐 Admin Login</h2>
-  <input id="email" placeholder="Correo">
-  <input id="pass" type="password" placeholder="Contraseña">
-  <button class="green" onclick="login()">Entrar</button>
-</div>
-
-<!-- APP -->
-<div id="app" style="display:none">
-
-<h2>💰 J.B Capital</h2>
-
-<button class="blue" onclick="cargar()">📋 Ver activos</button>
-<button class="orange" onclick="cargarPagados()">🟢 Ver pagados</button>
-
-<hr>
-
-<h3>📋 Crear préstamo</h3>
-
-<select id="clienteId">
-  <option value="">Seleccionar cliente</option>
-</select>
-
-<input id="nombre" placeholder="Nombre">
-<input id="telefono" placeholder="Teléfono">
+<select id="cliente"></select>
 <input id="monto" placeholder="Monto">
-<input id="interes" placeholder="Interés %">
-<input id="dias" placeholder="Días">
+<input id="interes" placeholder="% interés">
 <input id="cuotas" placeholder="Cuotas">
+<input id="dias" placeholder="Días">
 
-<button class="green" onclick="guardar()">Guardar préstamo</button>
-
-<hr>
-
-<div id="lista"></div>
-
-</div>
-
-</div>
+<button onclick="guardar()">Guardar</button>
 
 <script>
-
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
@@ -115,170 +33,40 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+const db=firebase.firestore();
 
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-let lista = document.getElementById("lista");
-
-// LOGIN
-function login(){
-  let email = document.getElementById("email").value;
-  let pass = document.getElementById("pass").value;
-
-  auth.signInWithEmailAndPassword(email, pass)
-  .then(()=>{
-    document.getElementById("login").style.display="none";
-    document.getElementById("app").style.display="block";
-    cargarClientes();
-    cargar();
-  })
-  .catch(e=>alert(e.message));
-}
-
-// CLIENTES
-async function cargarClientes(){
-
-  let select = document.getElementById("clienteId");
-  select.innerHTML = `<option value="">Seleccionar cliente</option>`;
-
-  let clientes = await db.collection("clientes").get();
-
-  clientes.forEach(doc=>{
-    let c = doc.data();
-    select.innerHTML += `
-      <option value="${c.uid}">
-        ${c.nombre} - ${c.telefono}
-      </option>
-    `;
+async function cargar(){
+  let d=await db.collection("clientes").get();
+  d.forEach(doc=>{
+    let c=doc.data();
+    document.getElementById("cliente").innerHTML+=
+      `<option value="${c.uid}">${c.nombre}</option>`;
   });
 }
 
-// GUARDAR PRÉSTAMO
 async function guardar(){
 
-  let clienteId = document.getElementById("clienteId").value;
-  let nombre = document.getElementById("nombre").value;
-  let telefono = document.getElementById("telefono").value;
-  let monto = parseFloat(document.getElementById("monto").value);
-  let interes = parseFloat(document.getElementById("interes").value);
-  let dias = parseInt(document.getElementById("dias").value);
-  let cuotas = parseInt(document.getElementById("cuotas").value);
+  let monto=parseFloat(document.getElementById("monto").value);
+  let interes=parseFloat(document.getElementById("interes").value);
+  let cuotas=parseInt(document.getElementById("cuotas").value);
+  let dias=parseInt(document.getElementById("dias").value);
+  let clienteId=document.getElementById("cliente").value;
 
-  if(!clienteId || !nombre || !telefono || !monto || !interes || !dias || !cuotas){
-    alert("Completa todo");
-    return;
-  }
-
-  let total = monto + (monto * interes / 100);
-  let cuotaValor = total / cuotas;
-
-  let f = new Date();
-  let pago = new Date();
-  pago.setDate(f.getDate() + dias);
+  let total=monto+(monto*interes/100);
 
   await db.collection("prestamos").add({
     clienteId,
-    nombre,
-    telefono,
     monto,
-    interes,
     total,
     cuotas,
-    cuotaValor,
     pagadas:0,
-    fecha: f.toISOString(),
-    fechaPago: pago.toISOString(),
-    estado:"pendiente"
+    fecha:new Date().toISOString()
   });
 
-  alert("Préstamo creado ✔️");
-
-  document.querySelectorAll("input").forEach(i=>i.value="");
-  cargar();
+  alert("Guardado ✔️");
 }
 
-// CARGAR ACTIVOS
-async function cargar(){
-
-  lista.innerHTML = "Cargando...";
-
-  let datos = await db.collection("prestamos")
-    .where("estado","==","pendiente")
-    .get();
-
-  lista.innerHTML = "";
-
-  datos.forEach(doc=>{
-    let d = doc.data();
-    let vencido = new Date() > new Date(d.fechaPago);
-
-    lista.innerHTML += `
-    <div class="card">
-
-      <b>${d.nombre}</b><br>
-      📞 ${d.telefono}<br>
-      💵 $${d.monto} → $${d.total}<br>
-      🧾 ${d.pagadas}/${d.cuotas}<br>
-      📅 Vence: ${new Date(d.fechaPago).toLocaleDateString()}<br>
-
-      ${vencido ? '<span class="alerta">⚠️ VENCIDO</span><br>' : ''}
-
-      <a href="https://wa.me/57${d.telefono}" target="_blank">
-        <button class="blue">Cobrar</button>
-      </a>
-
-      <button class="green" onclick="pagarTotal('${doc.id}')">
-        Marcar pagado
-      </button>
-
-    </div>
-    `;
-  });
-}
-
-// PAGADOS
-async function cargarPagados(){
-
-  lista.innerHTML = "";
-
-  let datos = await db.collection("prestamos")
-    .where("estado","==","pagado")
-    .get();
-
-  datos.forEach(doc=>{
-    let d = doc.data();
-
-    lista.innerHTML += `
-    <div class="card" style="opacity:0.6">
-
-      <b>${d.nombre}</b><br>
-      💰 $${d.total}<br>
-      ✅ PAGADO
-
-    </div>
-    `;
-  });
-}
-
-// 🔥 MARCAR PAGADO (FUNCION CORRECTA)
-async function pagarTotal(id){
-
-  try {
-    await db.collection("prestamos").doc(id).update({
-      estado: "pagado",
-      fechaCierre: new Date().toISOString()
-    });
-
-    alert("Préstamo marcado como pagado ✔️");
-    cargar();
-
-  } catch (error) {
-    console.error(error);
-    alert("Error: " + error.message);
-  }
-}
-
+cargar();
 </script>
 
 </body>
