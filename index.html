@@ -12,35 +12,63 @@
 <style>
 body {
   margin:0;
-  font-family: 'Segoe UI', sans-serif;
-  background: linear-gradient(135deg, #0f172a, #1e293b);
-  color:white;
+  font-family:'Segoe UI',sans-serif;
+  background:#0f172a;
   display:flex;
   justify-content:center;
+  align-items:center;
+  min-height:100vh;
+  color:white;
 }
 
-.app {
+/* TARJETA FONDO */
+body::before{
+  content:"";
+  position:fixed;
+  width:90%;
+  height:260px;
+  top:20px;
+  left:50%;
+  transform:translateX(-50%);
+  border-radius:20px;
+  background: linear-gradient(135deg,#22c55e,#3b82f6,#9333ea);
+  box-shadow:0 10px 40px rgba(0,0,0,0.6);
+  z-index:0;
+}
+
+/* TEXTO TARJETA */
+body::after{
+  content:"J.B CAPITAL";
+  position:fixed;
+  top:40px;
+  left:50%;
+  transform:translateX(-50%);
+  font-size:22px;
+  font-weight:bold;
+  letter-spacing:2px;
+  z-index:1;
+}
+
+/* CONTENEDOR */
+.app{
+  position:relative;
+  z-index:2;
   max-width:420px;
   width:100%;
   padding:20px;
 }
 
-/* TITULOS */
-h1 {
-  text-align:center;
-}
-
 /* PANEL */
-.panel {
-  background: rgba(255,255,255,0.05);
+.panel{
+  background:rgba(255,255,255,0.05);
   padding:15px;
   border-radius:12px;
-  backdrop-filter: blur(10px);
+  backdrop-filter:blur(10px);
   margin-bottom:15px;
 }
 
 /* INPUTS */
-input {
+input{
   width:100%;
   padding:12px;
   margin:6px 0;
@@ -51,7 +79,7 @@ input {
 }
 
 /* BOTONES */
-button {
+button{
   width:100%;
   padding:12px;
   margin:6px 0;
@@ -62,26 +90,27 @@ button {
   transition:0.3s;
 }
 
-button:hover {
-  transform: scale(1.03);
+button:hover{
+  transform:scale(1.03);
 }
 
-.btn-main { background:#22c55e; }
-.btn-blue { background:#3b82f6; }
-.btn-orange { background:#f59e0b; }
-.btn-red { background:#ef4444; }
+.btn-main{background:#22c55e;}
+.btn-blue{background:#3b82f6;}
+.btn-orange{background:#f59e0b;}
+.btn-red{background:#ef4444;}
 
 /* CARDS */
-.card {
-  background: rgba(255,255,255,0.05);
+.card{
+  background:rgba(255,255,255,0.05);
   padding:15px;
   border-radius:12px;
   margin-top:10px;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  backdrop-filter:blur(8px);
+  box-shadow:0 4px 20px rgba(0,0,0,0.3);
 }
 
-.alerta {
+/* ALERTA */
+.alerta{
   color:#f87171;
   font-weight:bold;
 }
@@ -133,36 +162,35 @@ button:hover {
 
 <script>
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
-  authDomain: "jb-prestamos.firebaseapp.com",
-  projectId: "jb-prestamos"
+const firebaseConfig={
+  apiKey:"AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
+  authDomain:"jb-prestamos.firebaseapp.com",
+  projectId:"jb-prestamos"
 };
 
 firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
+const db=firebase.firestore();
 
 // LOGIN
 function login(){
-  firebase.auth().signInWithEmailAndPassword(
-    user.value, pass.value
-  ).then(()=>{
-    document.getElementById("login").style.display="none";
-    document.getElementById("app").style.display="block";
+  firebase.auth().signInWithEmailAndPassword(user.value,pass.value)
+  .then(()=>{
+    login.style.display="none";
+    app.style.display="block";
     cargar();
   }).catch(e=>alert(e.message));
 }
 
 // GUARDAR
 async function guardar(){
-  let user=firebase.auth().currentUser;
+  let u=firebase.auth().currentUser;
 
-  let nombre=nombreInput("nombre");
-  let telefono=nombreInput("telefono");
-  let monto=parseFloat(nombreInput("monto"));
-  let interes=parseFloat(nombreInput("interes"));
-  let dias=parseInt(nombreInput("dias"));
-  let cuotas=parseInt(nombreInput("cuotas"));
+  let nombre=val("nombre");
+  let telefono=val("telefono");
+  let monto=parseFloat(val("monto"));
+  let interes=parseFloat(val("interes"));
+  let dias=parseInt(val("dias"));
+  let cuotas=parseInt(val("cuotas"));
 
   if(!nombre||!telefono||!monto||!interes||!dias||!cuotas){
     alert("Completa todo");
@@ -172,39 +200,36 @@ async function guardar(){
   let total=monto+(monto*interes/100);
   let cuotaValor=total/cuotas;
 
-  let fecha=new Date();
-  let fechaPago=new Date();
-  fechaPago.setDate(fecha.getDate()+dias);
+  let f=new Date();
+  let pago=new Date();
+  pago.setDate(f.getDate()+dias);
 
   await db.collection("prestamos").add({
-    nombre,telefono,monto,interes,total,cuotas,cuotaValor,
-    pagadas:0,
-    fecha:fecha.toISOString(),
-    fechaPago:fechaPago.toISOString(),
+    nombre,telefono,monto,interes,total,
+    cuotas,cuotaValor,pagadas:0,
+    fecha:f.toISOString(),
+    fechaPago:pago.toISOString(),
     estado:"pendiente",
-    userId:user.uid
+    userId:u.uid
   });
 
   alert("Guardado ✔️");
-
   document.querySelectorAll("input").forEach(i=>i.value="");
-
   cargar();
 }
 
-// helper
-function nombreInput(id){
+function val(id){
   return document.getElementById(id).value;
 }
 
 // CARGAR
 async function cargar(){
-  let user=firebase.auth().currentUser;
+  let u=firebase.auth().currentUser;
 
   let datos=await db.collection("prestamos")
-    .where("userId","==",user.uid).get();
+  .where("userId","==",u.uid).get();
 
-  let totalGanancia=0,totalPrestado=0,pendientes=0,gananciaHoy=0;
+  let g=0,tp=0,p=0,h=0;
   let hoy=new Date().toDateString();
 
   lista.innerHTML="";
@@ -212,16 +237,13 @@ async function cargar(){
   datos.forEach(doc=>{
     let d=doc.data();
 
-    let ganancia=d.total-d.monto;
-    totalGanancia+=ganancia;
-    totalPrestado+=d.monto;
+    let gan=d.total-d.monto;
+    g+=gan; tp+=d.monto;
 
-    if(new Date(d.fecha).toDateString()===hoy){
-      gananciaHoy+=ganancia;
-    }
+    if(new Date(d.fecha).toDateString()===hoy) h+=gan;
 
     let vencido=new Date()>new Date(d.fechaPago);
-    if(d.estado==="pendiente") pendientes++;
+    if(d.estado==="pendiente") p++;
 
     lista.innerHTML+=`
     <div class="card">
@@ -230,7 +252,7 @@ async function cargar(){
       💵 $${d.monto} → 💰 $${d.total}<br>
       📅 ${new Date(d.fechaPago).toLocaleDateString()}<br>
       🧾 ${d.pagadas}/${d.cuotas} | $${Math.round(d.cuotaValor)}<br>
-      ${vencido && d.estado==="pendiente" ? '<span class="alerta">⚠️ VENCIDO</span><br>' : ''}
+      ${vencido&&d.estado==="pendiente"?'<span class="alerta">⚠️ VENCIDO</span><br>':''}
 
       <a href="https://wa.me/573208202344?text=Hola ${d.nombre}, debes $${d.total}" target="_blank">
         <button class="btn-blue">Cobrar</button>
@@ -239,29 +261,27 @@ async function cargar(){
       <button class="btn-main" onclick="pagarCuota('${doc.id}',${d.pagadas})">Cuota</button>
       <button class="btn-orange" onclick="pagar('${doc.id}')">Pagado</button>
       <button class="btn-red" onclick="eliminar('${doc.id}')">Eliminar</button>
-    </div>
-    `;
+    </div>`;
   });
 
-  gananciaTotal.innerText=totalGanancia;
-  totalPrestado.innerText=totalPrestado;
-  pendientes.innerText=pendientes;
-  hoy.innerText=gananciaHoy;
+  gananciaTotal.innerText=g;
+  totalPrestado.innerText=tp;
+  pendientes.innerText=p;
+  hoy.innerText=h;
 }
 
 // VENCIDOS
 async function verVencidos(){
-  let user=firebase.auth().currentUser;
-
+  let u=firebase.auth().currentUser;
   let datos=await db.collection("prestamos")
-    .where("userId","==",user.uid).get();
+  .where("userId","==",u.uid).get();
 
   lista.innerHTML="";
   let hoy=new Date();
 
   datos.forEach(doc=>{
     let d=doc.data();
-    if(hoy>new Date(d.fechaPago) && d.estado==="pendiente"){
+    if(hoy>new Date(d.fechaPago)&&d.estado==="pendiente"){
       lista.innerHTML+=`<div class="card alerta">${d.nombre} debe $${d.total}</div>`;
     }
   });
@@ -269,17 +289,16 @@ async function verVencidos(){
 
 // RECORDAR
 async function recordar(){
-  let user=firebase.auth().currentUser;
-
+  let u=firebase.auth().currentUser;
   let datos=await db.collection("prestamos")
-    .where("userId","==",user.uid).get();
+  .where("userId","==",u.uid).get();
 
   let hoy=new Date();
 
   datos.forEach(doc=>{
     let d=doc.data();
-    if(hoy>new Date(d.fechaPago) && d.estado==="pendiente"){
-      window.open(`https://wa.me/57${d.telefono}?text=Hola ${d.nombre}, tienes deuda de $${d.total}`,"_blank");
+    if(hoy>new Date(d.fechaPago)&&d.estado==="pendiente"){
+      window.open(`https://wa.me/57${d.telefono}?text=Hola ${d.nombre}, debes $${d.total}`,"_blank");
     }
   });
 }
@@ -292,7 +311,7 @@ async function pagarCuota(id,pagadas){
   cargar();
 }
 
-// PAGAR TODO
+// PAGAR TOTAL
 async function pagar(id){
   await db.collection("prestamos").doc(id).update({
     estado:"pagado"
