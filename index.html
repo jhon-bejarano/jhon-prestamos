@@ -79,8 +79,8 @@
         alert("Guardado ✔️");
         cargar();
       } catch (e) {
-        console.log("ERROR FIREBASE:", e);
-        alert("Error: " + e.message);
+        alert("error: " + e.message);
+        console.log(e);
       }
     }
 
