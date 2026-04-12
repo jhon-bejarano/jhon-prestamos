@@ -2,54 +2,123 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<title>Registro Cliente</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+}
+
+.container{
+  max-width:400px;
+  margin:auto;
+  padding:30px;
+}
+
+.card{
+  background:#1e293b;
+  padding:20px;
+  border-radius:10px;
+}
+
+input{
+  width:100%;
+  padding:12px;
+  margin:6px 0;
+  border:none;
+  border-radius:8px;
+  background:#020617;
+  color:white;
+}
+
+button{
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  border:none;
+  border-radius:8px;
+  background:#22c55e;
+  color:white;
+  font-weight:bold;
+  cursor:pointer;
+}
+</style>
+
 </head>
 
 <body>
 
-<h2>Registro</h2>
+<div class="container">
+  <div class="card">
 
-<input id="nombre" placeholder="Nombre">
-<input id="telefono" placeholder="Teléfono">
-<input id="email" placeholder="Correo">
-<input id="password" type="password">
+    <h2>🟢 Registro Cliente</h2>
 
-<button onclick="registrar()">Crear cuenta</button>
+    <input id="nombre" placeholder="Nombre completo">
+    <input id="telefono" placeholder="Teléfono">
+    <input id="email" placeholder="Correo">
+    <input id="password" type="password" placeholder="Contraseña">
+
+    <button onclick="registrar()">Crear cuenta</button>
+
+  </div>
+</div>
 
 <script>
 
+// 🔥 CONFIG REAL
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+// 🔥 INICIALIZAR
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
 const auth = firebase.auth();
 const db = firebase.firestore();
 
+// 🟢 REGISTRAR
 async function registrar(){
 
-  let nombre = nombre.value;
-  let telefono = telefono.value;
-  let email = email.value;
-  let password = password.value;
+  let nombre = document.getElementById("nombre").value;
+  let telefono = document.getElementById("telefono").value;
+  let email = document.getElementById("email").value;
+  let password = document.getElementById("password").value;
 
-  let user = await auth.createUserWithEmailAndPassword(email,password);
+  if(!nombre || !telefono || !email || !password){
+    alert("Completa todos los campos");
+    return;
+  }
 
-  await db.collection("clientes").doc(user.user.uid).set({
-    nombre,
-    telefono,
-    email
-  });
+  try{
 
-  alert("Cuenta creada");
-  window.location.href="login.html";
+    let user = await auth.createUserWithEmailAndPassword(email,password);
+
+    await db.collection("clientes").doc(user.user.uid).set({
+      uid: user.user.uid,
+      nombre: nombre,
+      telefono: telefono,
+      email: email,
+      fecha: new Date().toISOString()
+    });
+
+    alert("Cuenta creada correctamente ✔️");
+
+    window.location.href = "login.html";
+
+  }catch(e){
+    alert("Error: " + e.message);
+  }
 }
 
 </script>
