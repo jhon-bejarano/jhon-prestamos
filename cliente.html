@@ -2,88 +2,24 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Admin - J.B Capital</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
-body{
-  margin:0;
-  font-family:Arial;
-  background:#0f172a;
-  color:white;
-}
-
-.container{
-  max-width:500px;
-  margin:auto;
-  padding:20px;
-}
-
-.card{
-  background:#1e293b;
-  padding:15px;
-  border-radius:12px;
-  margin-bottom:10px;
-}
-
-input, select{
-  width:100%;
-  padding:10px;
-  margin:5px 0;
-  border:none;
-  border-radius:8px;
-  background:#020617;
-  color:white;
-}
-
-button{
-  width:100%;
-  padding:10px;
-  margin-top:5px;
-  border:none;
-  border-radius:8px;
-  font-weight:bold;
-  cursor:pointer;
-}
-
-.green{background:#22c55e;}
-.blue{background:#3b82f6;}
+body{background:#0f172a;color:white;font-family:Arial;}
+.card{background:#1e293b;padding:15px;border-radius:12px;margin:10px;}
 </style>
 </head>
 
 <body>
 
-<div class="container">
-
-<h2>💰 Admin - J.B Capital</h2>
-
-<div class="card">
-
-<h3>Crear préstamo</h3>
-
-<select id="cliente">
-  <option value="">Seleccionar cliente</option>
-</select>
-
-<input id="monto" placeholder="Monto">
-<input id="interes" placeholder="Interés %">
-<input id="cuotas" placeholder="Cuotas">
-<input id="dias" placeholder="Días">
-
-<button class="green" onclick="guardar()">Guardar préstamo</button>
-
-</div>
-
+<h2>💰 Cliente</h2>
+<p id="user"></p>
 <div id="lista"></div>
 
-</div>
-
 <script>
-
-// 🔥 FIREBASE CONFIG
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
@@ -91,68 +27,40 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.firestore();
 
-const db = firebase.firestore();
-
-// 🔵 CARGAR CLIENTES AUTOMÁTICO
-async function cargarClientes(){
-
-  let select = document.getElementById("cliente");
-
-  let datos = await db.collection("clientes").get();
-
-  datos.forEach(doc=>{
-    let c = doc.data();
-
-    select.innerHTML += `
-      <option value="${c.uid}">
-        ${c.nombre} - ${c.telefono}
-      </option>
-    `;
-  });
-}
-
-// 💰 GUARDAR PRÉSTAMO
-async function guardar(){
-
-  let clienteId = document.getElementById("cliente").value;
-  let monto = parseFloat(document.getElementById("monto").value);
-  let interes = parseFloat(document.getElementById("interes").value);
-  let cuotas = parseInt(document.getElementById("cuotas").value);
-  let dias = parseInt(document.getElementById("dias").value);
-
-  if(!clienteId || !monto || !interes || !cuotas || !dias){
-    alert("Completa todo");
+auth.onAuthStateChanged(user=>{
+  if(!user){
+    window.location.href="login.html";
     return;
   }
 
-  let total = monto + (monto * interes / 100);
-  let cuotaValor = total / cuotas;
+  document.getElementById("user").innerText=user.email;
 
-  let f = new Date();
-  let pago = new Date();
-  pago.setDate(f.getDate() + dias);
+  db.collection("prestamos")
+  .where("clienteId","==",user.uid)
+  .get()
+  .then(d=>{
+    let lista=document.getElementById("lista");
+    lista.innerHTML="";
 
-  await db.collection("prestamos").add({
-    clienteId,
-    monto,
-    total,
-    cuotas,
-    cuotaValor,
-    pagadas:0,
-    fecha:f.toISOString(),
-    fechaPago:pago.toISOString(),
-    estado:"pendiente"
+    if(d.empty){
+      lista.innerHTML="No tienes préstamos";
+      return;
+    }
+
+    d.forEach(doc=>{
+      let x=doc.data();
+
+      lista.innerHTML+=`
+      <div class="card">
+        💵 $${x.monto}<br>
+        💰 Total: $${x.total}
+      </div>`;
+    });
   });
-
-  alert("Préstamo creado ✔️");
-
-  document.querySelectorAll("input").forEach(i=>i.value="");
-}
-
-// 🚀 INICIAR
-cargarClientes();
-
+});
 </script>
 
 </body>
