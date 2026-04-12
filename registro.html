@@ -35,11 +35,14 @@ button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;bac
 
 <script>
 const firebaseConfig = {
-  apiKey: "AIzaSyXXXXX...", ✅
+  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
-firebase.initializeApp(firebaseConfig);
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 const auth = firebase.auth();
 const db = firebase.firestore();
 
