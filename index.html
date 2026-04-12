@@ -132,7 +132,6 @@
 </div>
 
 <script>
-  // 🔥 PRUEBA 1: confirmar que el script carga
   alert("SCRIPT CARGADO");
 
   const firebaseConfig = {
@@ -147,44 +146,35 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // 🔥 BOTÓN
-  document.getElementById("btnGuardar").addEventListener("click", async () => {
-    alert("CLICK DETECTADO");
+  // 🔥 ESPERAR DIRECTO SIN DOMCONTENTLOADED
+  setTimeout(() => {
 
-    let nombre = document.getElementById("nombre").value;
-    let monto = document.getElementById("monto").value;
+    const btn = document.getElementById("btnGuardar");
 
-    try {
-      await db.collection("prestamos").add({
-        nombre,
-        monto
-      });
-
-      alert("GUARDADO EN FIREBASE ✔️");
-      cargar();
-
-    } catch (e) {
-      alert("ERROR: " + e.message);
+    if (!btn) {
+      alert("BOTÓN NO ENCONTRADO");
+      return;
     }
-  });
 
-  async function cargar() {
-    let lista = document.getElementById("lista");
-    lista.innerHTML = "";
+    btn.onclick = async function () {
+      alert("CLICK DETECTADO");
 
-    let datos = await db.collection("prestamos").get();
+      let nombre = document.getElementById("nombre").value;
+      let monto = document.getElementById("monto").value;
 
-    datos.forEach(doc => {
-      let d = doc.data();
+      try {
+        await db.collection("prestamos").add({
+          nombre,
+          monto
+        });
 
-      lista.innerHTML += `
-        <div class="card">
-          👤 ${d.nombre} <br>
-          💵 ${d.monto}
-        </div>
-      `;
-    });
-  }
+        alert("GUARDADO ✔️");
 
-  cargar();
+      } catch (e) {
+        alert("ERROR: " + e.message);
+      }
+    };
+
+  }, 1000); // 👈 espera 1 segundo
+
 </script>
