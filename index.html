@@ -4,51 +4,135 @@
 <meta charset="UTF-8">
 <title>J.B Préstamos</title>
 
+<!-- FIREBASE -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+
+<style>
+  body {
+    margin: 0;
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 420px;
+    text-align: center;
+    padding: 20px;
+  }
+
+  input, button {
+    width: 90%;
+    padding: 10px;
+    margin: 5px;
+    border-radius: 6px;
+    border: none;
+  }
+
+  button {
+    background: green;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  .card {
+    background: #111827;
+    margin-top: 10px;
+    padding: 10px;
+    border-radius: 8px;
+  }
+</style>
 
 </head>
 
 <body>
 
-<h1>J.B Préstamos</h1>
+<div class="app">
 
-<input id="nombre" placeholder="Nombre">
-<input id="monto" placeholder="Monto">
+  <h1>💰 J.B Préstamos</h1>
 
-<button onclick="guardar()">Guardar</button>
+  <input id="nombre" placeholder="Nombre del cliente">
+  <input id="monto" placeholder="Monto del préstamo">
 
-<div id="lista"></div>
+  <button onclick="guardar()">Guardar préstamo</button>
+
+  <h2>📋 Lista</h2>
+  <div id="lista"></div>
+
+</div>
 
 <script>
-alert("APP OK");
+alert("APP FUNCIONANDO");
 
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
-  projectId: "jb-prestamos"
+  projectId: "jb-prestamos",
+  storageBucket: "jb-prestamos.appspot.com",
+  messagingSenderId: "45452353450",
+  appId: "1:45452353450:web:caaca5cf8ecf494043d5d3"
 };
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
 
+// 🔥 GUARDAR
 async function guardar() {
   let nombre = document.getElementById("nombre").value;
   let monto = document.getElementById("monto").value;
 
+  if (!nombre || !monto) {
+    alert("Completa los campos");
+    return;
+  }
+
   try {
     await db.collection("prestamos").add({
       nombre,
-      monto
+      monto,
+      fecha: new Date()
     });
 
     alert("GUARDADO ✔️");
+
+    document.getElementById("nombre").value = "";
+    document.getElementById("monto").value = "";
+
+    cargar();
 
   } catch (error) {
     alert("ERROR: " + error.message);
     console.log(error);
   }
 }
+
+// 🔥 CARGAR LISTA
+async function cargar() {
+  let lista = document.getElementById("lista");
+  lista.innerHTML = "";
+
+  let datos = await db.collection("prestamos").get();
+
+  datos.forEach(doc => {
+    let d = doc.data();
+
+    lista.innerHTML += `
+      <div class="card">
+        👤 ${d.nombre} <br>
+        💵 $${d.monto}
+      </div>
+    `;
+  });
+}
+
+// INICIAR
+cargar();
 </script>
 
 </body>
