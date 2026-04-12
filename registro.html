@@ -2,77 +2,57 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Registro Cliente</title>
 
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
-<style>
-body{margin:0;font-family:Arial;background:#0f172a;color:white;}
-.container{max-width:400px;margin:auto;padding:25px;}
-.card{background:#1e293b;padding:20px;border-radius:12px;}
-input{width:100%;padding:12px;margin:6px 0;border:none;border-radius:8px;background:#020617;color:white;}
-button{width:100%;padding:12px;margin-top:10px;border:none;border-radius:8px;background:#22c55e;color:white;font-weight:bold;}
-</style>
 </head>
 
 <body>
-<div class="container">
-<div class="card">
 
-<h2>🟢 Registro Cliente</h2>
+<h2>Registro</h2>
 
 <input id="nombre" placeholder="Nombre">
 <input id="telefono" placeholder="Teléfono">
 <input id="email" placeholder="Correo">
-<input id="password" type="password" placeholder="Contraseña">
+<input id="password" type="password">
 
 <button onclick="registrar()">Crear cuenta</button>
 
-</div>
-</div>
-
 <script>
+
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
   projectId: "jb-prestamos"
 };
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+
 const auth = firebase.auth();
 const db = firebase.firestore();
 
 async function registrar(){
 
-  let nombre = document.getElementById("nombre").value;
-  let telefono = document.getElementById("telefono").value;
-  let email = document.getElementById("email").value;
-  let password = document.getElementById("password").value;
+  let nombre = nombre.value;
+  let telefono = telefono.value;
+  let email = email.value;
+  let password = password.value;
 
-  if(!nombre || !telefono || !email || !password){
-    alert("Completa todo");
-    return;
-  }
+  let user = await auth.createUserWithEmailAndPassword(email,password);
 
-  try{
-    let user = await auth.createUserWithEmailAndPassword(email,password);
-    let uid = user.user.uid;
+  await db.collection("clientes").doc(user.user.uid).set({
+    nombre,
+    telefono,
+    email
+  });
 
-    await db.collection("clientes").doc(uid).set({
-      uid,nombre,telefono,email
-    });
-
-    alert("Cuenta creada ✔️");
-    window.location.href="login.html";
-
-  }catch(e){
-    alert(e.message);
-  }
+  alert("Cuenta creada");
+  window.location.href="login.html";
 }
+
 </script>
+
 </body>
 </html>
