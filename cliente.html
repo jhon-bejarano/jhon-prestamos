@@ -16,8 +16,8 @@ body{
   color:white;
 }
 
-.app{
-  max-width:600px;
+.container{
+  max-width:500px;
   margin:auto;
   padding:20px;
 }
@@ -40,34 +40,24 @@ button{
 }
 
 .blue{background:#3b82f6;}
-.green{background:#22c55e;}
 .red{background:#ef4444;}
 
 .alerta{
   color:#f87171;
   font-weight:bold;
 }
-
-progress{
-  width:100%;
-  height:10px;
-  margin:8px 0;
-}
 </style>
 </head>
 
 <body>
 
-<div class="app">
+<div class="container">
 
 <h2>💰 J.B Capital - Cliente</h2>
 
 <p>👤 <b id="user">Cargando...</b></p>
 
-<div class="card">
-<h3>📋 Mis préstamos</h3>
 <div id="lista"></div>
-</div>
 
 <button class="red" onclick="logout()">Cerrar sesión</button>
 
@@ -75,6 +65,7 @@ progress{
 
 <script>
 
+// 🔥 CONFIG FIREBASE
 const firebaseConfig = {
   apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
   authDomain: "jb-prestamos.firebaseapp.com",
@@ -88,11 +79,11 @@ const db = firebase.firestore();
 
 let lista = document.getElementById("lista");
 
-// LOGIN AUTOMÁTICO
-auth.onAuthStateChanged(async (user)=>{
+// 🔐 PROTECCIÓN DE RUTA
+auth.onAuthStateChanged((user)=>{
 
   if(!user){
-    window.location.href = "index.html";
+    window.location.href = "login.html";
     return;
   }
 
@@ -101,13 +92,13 @@ auth.onAuthStateChanged(async (user)=>{
   cargarPrestamos(user.uid);
 });
 
-// CARGAR PRÉSTAMOS
+// 📊 CARGAR PRÉSTAMOS DEL CLIENTE
 async function cargarPrestamos(uid){
 
   lista.innerHTML = "Cargando...";
 
   let datos = await db.collection("prestamos")
-    .where("userId","==",uid)
+    .where("clienteId","==",uid)
     .get();
 
   lista.innerHTML = "";
@@ -120,56 +111,20 @@ async function cargarPrestamos(uid){
   datos.forEach(doc=>{
     let d = doc.data();
 
-    // FECHAS
-    let fechaSolicitud = new Date(d.fecha).toLocaleDateString();
-    let vencimiento = new Date(d.fechaPago).toLocaleDateString();
-
-    // CUPOS
-    let cupo = d.cupo || d.monto;
-    let usado = d.usado || d.monto;
-    let disponible = cupo - usado;
-    let porcentajeUso = Math.round((usado / cupo) * 100);
-
-    // SALDO
-    let pagado = (d.pagadas || 0) * (d.cuotaValor || 0);
-    let saldo = d.total - pagado;
-
-    // VENCIDO
     let vencido = new Date() > new Date(d.fechaPago);
 
     lista.innerHTML += `
     <div class="card">
 
-      <h3>💳 Línea de crédito</h3>
+      <b>💵 Monto:</b> $${d.monto}<br>
+      <b>💰 Total:</b> $${d.total}<br>
+      <b>🧾 Cuotas:</b> ${d.pagadas}/${d.cuotas}<br>
+      <b>📅 Vence:</b> ${new Date(d.fechaPago).toLocaleDateString()}<br>
 
-      <b>💰 Cupo total:</b> $${cupo}<br>
-      <b>📉 Usado:</b> $${usado}<br>
-      <b>💳 Disponible:</b> $${disponible}<br>
+      ${vencido ? '<span class="alerta">⚠️ VENCIDO</span>' : ''}
 
-      <progress value="${porcentajeUso}" max="100"></progress>
-      <small>${porcentajeUso}% usado</small>
-
-      <hr>
-
-      <b>📅 Fecha solicitud:</b> ${fechaSolicitud}<br>
-      <b>⏳ Vence:</b> ${vencimiento}<br>
-
-      <hr>
-
-      <b>💵 Monto préstamo:</b> $${d.monto}<br>
-      <b>💰 Total a pagar:</b> $${d.total}<br>
-      <b>📉 Saldo pendiente:</b> $${saldo}<br>
-
-      <b>🧾 Cuotas:</b> ${d.pagadas || 0}/${d.cuotas}<br>
-
-      ${
-        vencido && d.estado === "pendiente"
-          ? '<span class="alerta">⚠️ PRÉSTAMO VENCIDO</span><br>'
-          : ''
-      }
-
-      <a href="https://wa.me/57${d.telefono}?text=Hola, tengo un préstamo activo de $${d.total} con saldo pendiente de $${saldo}" target="_blank">
-        <button class="blue">Contactar asesor</button>
+      <a href="https://wa.me/57${d.telefono}" target="_blank">
+        <button class="blue">Contactar</button>
       </a>
 
     </div>
@@ -177,10 +132,10 @@ async function cargarPrestamos(uid){
   });
 }
 
-// LOGOUT
+// 🚪 LOGOUT
 function logout(){
   auth.signOut().then(()=>{
-    window.location.href = "index.html";
+    window.location.href = "login.html";
   });
 }
 
