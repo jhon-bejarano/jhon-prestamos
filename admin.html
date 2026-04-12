@@ -9,37 +9,96 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 
 <style>
+
+/* 🔥 FONDO */
 body{
   margin:0;
-  font-family:Arial;
-  background:#0f172a;
-  color:white;
+  font-family:Arial, sans-serif;
+  background: url("fondo.jpg") no-repeat center center fixed;
+  background-size: cover;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  height:100vh;
 }
-.app{
-  max-width:500px;
-  margin:auto;
-  padding:20px;
-}
-.card{
-  background:#1e293b;
-  padding:15px;
-  border-radius:10px;
-  margin-top:10px;
-}
-button{
+
+/* 🔥 CAPA OSCURA */
+body::before{
+  content:"";
+  position:fixed;
   width:100%;
-  padding:10px;
-  margin-top:5px;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
+  height:100%;
+  background: rgba(0,0,0,0.75);
+  z-index:-1;
+}
+
+/* 🔥 TARJETA CENTRAL (TIPO APP) */
+.card{
+  width:320px;
+  background: rgba(15,23,42,0.95);
+  border-radius:25px;
+  padding:25px;
+  box-shadow:0 20px 50px rgba(0,0,0,0.8);
+  text-align:center;
+}
+
+/* 🔥 LOGO / TÍTULO */
+.title{
+  font-size:20px;
+  margin-bottom:20px;
   font-weight:bold;
 }
-.green{background:#22c55e;}
-.blue{background:#3b82f6;}
-.orange{background:#f59e0b;}
-.red{background:#ef4444;}
-.alerta{color:#f87171;font-weight:bold;}
+
+/* 🔥 INPUTS */
+input{
+  width:100%;
+  padding:14px;
+  margin:8px 0;
+  border:none;
+  border-radius:12px;
+  background:#020617;
+  color:white;
+  font-size:14px;
+}
+
+input::placeholder{
+  color:#94a3b8;
+}
+
+/* 🔥 BOTONES */
+button{
+  width:100%;
+  padding:14px;
+  margin-top:10px;
+  border:none;
+  border-radius:12px;
+  font-weight:bold;
+  cursor:pointer;
+  transition:0.3s;
+}
+
+/* NEQUI STYLE */
+.btn-primary{
+  background:#00c853;
+}
+.btn-primary:hover{
+  background:#00b248;
+}
+
+.btn-secondary{
+  background:#2979ff;
+}
+.btn-secondary:hover{
+  background:#1565c0;
+}
+
+/* 🔥 OTP */
+#codigo{
+  text-align:center;
+  letter-spacing:6px;
+  font-size:18px;
+}
+
 </style>
 </head>
 
