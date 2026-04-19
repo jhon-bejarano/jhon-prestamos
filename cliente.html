@@ -3,358 +3,154 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>J.B Capital - Cliente</title>
+<title>J.B Capital</title>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
-/* ====== BASE ====== */
-*{box-sizing:border-box}
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins', sans-serif;
+}
+
 body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu;
-  background:url("fondo.jpg") no-repeat center center fixed;
-  background-size:cover;
-  min-height:100vh;
-  color:#e5e7eb;
+    background: linear-gradient(135deg,#6a11cb,#2575fc);
+    color:white;
 }
 
-/* overlay */
-body::before{
-  content:"";
-  position:fixed; inset:0;
-  background:rgba(0,0,0,0.75);
-  z-index:-1;
-}
-
-/* contenedor */
-.app{
-  max-width:420px;
-  margin:20px auto 40px;
-  padding:0 12px 30px;
-}
-
-/* ====== HEADER ====== */
+/* HEADER */
 .header{
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  margin:10px 4px 16px;
-}
-.brand{
-  font-weight:700;
-  letter-spacing:.5px;
-}
-.user{
-  font-size:12px;
-  opacity:.7;
+    padding:20px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
 }
 
-/* ====== TARJETA SALDO ====== */
-.wallet{
-  background:linear-gradient(135deg,#00c853,#00e676);
-  border-radius:22px;
-  padding:18px;
-  color:#022c22;
-  box-shadow:0 20px 40px rgba(0,0,0,.6);
+.header h2{
+    font-weight:600;
 }
-.wallet .label{font-size:12px; opacity:.8}
-.wallet .amount{font-size:28px; font-weight:800; margin-top:4px}
-.wallet .sub{font-size:12px; opacity:.8}
 
-/* ====== CARDS ====== */
+/* CARD SALDO */
 .card{
-  background:rgba(15,23,42,.95);
-  border-radius:20px;
-  padding:16px;
-  margin-top:14px;
-  box-shadow:0 10px 30px rgba(0,0,0,.6);
-}
-.card h3{
-  margin:0 0 8px;
-  font-size:16px;
+    background: rgba(255,255,255,0.1);
+    margin:20px;
+    padding:20px;
+    border-radius:20px;
+    backdrop-filter: blur(10px);
 }
 
-/* ====== INPUTS ====== */
-input,select{
-  width:100%;
-  padding:12px;
-  margin-top:8px;
-  border:none;
-  border-radius:12px;
-  background:#020617;
-  color:#e5e7eb;
-  outline:none;
+.balance{
+    font-size:28px;
+    font-weight:bold;
 }
 
-/* ====== BOTONES ====== */
-button{
-  width:100%;
-  padding:12px;
-  border:none;
-  border-radius:12px;
-  font-weight:700;
-  cursor:pointer;
-  margin-top:10px;
+/* BOTONES */
+.actions{
+    display:flex;
+    justify-content:space-around;
+    margin-top:20px;
 }
-.btn-primary{background:#00c853; color:#022c22}
-.btn-primary:hover{background:#00b248}
-.btn-dark{background:#111827}
-.btn-dark:hover{background:#1f2937}
-.btn-danger{background:#ef4444}
-.btn-danger:hover{background:#dc2626}
 
-/* ====== RESUMEN ====== */
-.summary{
-  display:flex;
-  justify-content:space-between;
-  margin-top:6px;
-  font-size:14px;
+.btn{
+    background:white;
+    color:#2575fc;
+    padding:12px 20px;
+    border-radius:10px;
+    border:none;
+    font-weight:600;
+    cursor:pointer;
 }
-.summary strong{font-size:15px}
 
-/* ====== LISTA ====== */
-.item{
-  background:#020617;
-  padding:12px;
-  border-radius:14px;
-  margin-top:10px;
-  font-size:13px;
+/* SERVICIOS */
+.services{
+    margin:20px;
 }
-.badge{
-  display:inline-block;
-  padding:2px 8px;
-  border-radius:8px;
-  font-size:11px;
-  margin-top:6px;
-}
-.pendiente{background:#f59e0b}
-.pagado{background:#22c55e}
-.vencido{background:#ef4444}
 
-/* ====== UTIL ====== */
-.center{text-align:center}
-.small{font-size:12px; opacity:.7}
+.service{
+    background: rgba(255,255,255,0.1);
+    padding:15px;
+    border-radius:15px;
+    margin-bottom:10px;
+}
+
+/* TRANSACCIONES */
+.transactions{
+    margin:20px;
+}
+
+.tx{
+    display:flex;
+    justify-content:space-between;
+    margin-bottom:10px;
+}
 </style>
-</head>
 
+</head>
 <body>
 
-<div class="app">
+<div class="header">
+    <h2>J.B Capital</h2>
+    <span>👤</span>
+</div>
 
-  <!-- HEADER -->
-  <div class="header">
-    <div class="brand">💳 J.B Capital</div>
-    <div id="user" class="user"></div>
-  </div>
+<div class="card">
+    <p>Saldo disponible</p>
+    <div class="balance" id="saldo">$1,500,000</div>
 
-  <!-- WALLET -->
-  <div class="wallet">
-    <div class="label">Cupo disponible</div>
-    <div class="amount" id="cupo">COP $100.000</div>
-    <div class="sub">Límite por cliente</div>
-  </div>
-
-  <!-- SOLICITUD -->
-  <div class="card">
-    <h3>Solicitar préstamo</h3>
-
-    <input id="monto" type="number" placeholder="Monto (COP)">
-    <input id="cuotas" type="number" placeholder="Cuotas (máx 1)">
-
-    <select id="dias">
-      <option value="">Selecciona días</option>
-      <option value="15">15 días</option>
-      <option value="20">20 días</option>
-    </select>
-
-    <div class="summary">
-      <span>Interés + recargo</span>
-      <strong id="interes">COP $0</strong>
+    <div class="actions">
+        <button class="btn" onclick="depositar()">Depositar</button>
+        <button class="btn" onclick="retirar()">Retirar</button>
     </div>
-    <div class="summary">
-      <span>Total a pagar</span>
-      <strong id="total">COP $0</strong>
+</div>
+
+<div class="services">
+    <h3>Servicios</h3>
+
+    <div class="service">💳 Tarjetas</div>
+    <div class="service">📈 Inversiones</div>
+    <div class="service">💰 Préstamos</div>
+</div>
+
+<div class="transactions">
+    <h3>Movimientos</h3>
+
+    <div class="tx">
+        <span>Depósito</span>
+        <span>+$200,000</span>
     </div>
 
-    <button class="btn-primary" onclick="solicitar()">Solicitar</button>
-  </div>
-
-  <!-- FILTROS -->
-  <div class="card">
-    <button class="btn-dark" onclick="verActivos()">💰 Activos</button>
-    <button class="btn-dark" onclick="verPagados()">✅ Pagados</button>
-    <button class="btn-dark" onclick="verVencidos()">⚠️ Vencidos</button>
-    <button class="btn-dark" onclick="verHistorial()">📜 Historial</button>
-  </div>
-
-  <!-- LISTA -->
-  <div class="card">
-    <h3>Mis préstamos</h3>
-    <div id="lista"></div>
-  </div>
-
-  <button class="btn-danger" onclick="logout()">Cerrar sesión</button>
+    <div class="tx">
+        <span>Pago</span>
+        <span>-$50,000</span>
+    </div>
 
 </div>
 
 <script>
-const firebaseConfig = {
-  apiKey: "AIzaSyBXWsZzM1E-XTqS0KlbxRea9BoKWQakIug",
-  authDomain: "jb-prestamos.firebaseapp.com",
-  projectId: "jb-prestamos"
-};
+let saldo = 1500000;
 
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-
-const auth = firebase.auth();
-const db = firebase.firestore();
-
-const lista = document.getElementById("lista");
-
-function formatoCOP(v){
-  return "COP $" + (v||0).toLocaleString("es-CO");
+function actualizarUI(){
+    document.getElementById("saldo").innerText = "$" + saldo.toLocaleString();
 }
 
-auth.onAuthStateChanged(async (user)=>{
-  if(!user) return location.href="login.html";
-  document.getElementById("user").innerText=user.email;
-  cargarPrestamos(user.uid);
-});
-
-/* ====== LISTADO ====== */
-async function cargarPrestamos(uid){
-  const datos = await db.collection("prestamos").where("userId","==",uid).get();
-  pintar(datos);
-}
-
-function pintar(datos){
-  lista.innerHTML="";
-  datos.forEach(doc=>{
-    let d=doc.data();
-    let vencido=new Date()>new Date(d.fechaVencimiento);
-
-    let estadoClass = d.estado==="pagado" ? "pagado" :
-                      vencido && d.estado==="pendiente" ? "vencido" : "pendiente";
-
-    lista.innerHTML+=`
-    <div class="item">
-      💵 ${formatoCOP(d.monto)}<br>
-      💰 ${formatoCOP(d.interes)}<br>
-      ➕ ${formatoCOP(d.recargo||0)}<br>
-      📊 ${formatoCOP(d.total)}<br>
-      📆 ${d.dias} días<br>
-      <span class="badge ${estadoClass}">${estadoClass.toUpperCase()}</span>
-    </div>`;
-  });
-}
-
-/* ====== FILTROS ====== */
-async function verActivos(){
-  let u=auth.currentUser;
-  let d=await db.collection("prestamos")
-  .where("userId","==",u.uid)
-  .where("estado","==","pendiente").get();
-  pintar(d);
-}
-
-async function verPagados(){
-  let u=auth.currentUser;
-  let d=await db.collection("prestamos")
-  .where("userId","==",u.uid)
-  .where("estado","==","pagado").get();
-  pintar(d);
-}
-
-async function verVencidos(){
-  let u=auth.currentUser;
-  let d=await db.collection("prestamos")
-  .where("userId","==",u.uid).get();
-
-  lista.innerHTML="";
-  d.forEach(doc=>{
-    let x=doc.data();
-    if(new Date()>new Date(x.fechaVencimiento) && x.estado==="pendiente"){
-      lista.innerHTML+=`
-      <div class="item">
-        ⚠️ VENCIDO<br>
-        ${formatoCOP(x.total)}
-      </div>`;
+function depositar(){
+    let valor = prompt("Ingrese valor a depositar:");
+    if(valor){
+        saldo += parseInt(valor);
+        actualizarUI();
     }
-  });
 }
 
-async function verHistorial(){
-  let u=auth.currentUser;
-  let d=await db.collection("prestamos").where("userId","==",u.uid).get();
-  pintar(d);
-}
-
-/* ====== CALCULO ====== */
-function calcular(){
-  let m=parseFloat(monto.value)||0;
-  let d=parseInt(dias.value);
-
-  let i=m*0.20;
-  let r=d===20?8000:0;
-  let t=m+i+r;
-
-  interes.innerText=formatoCOP(i+r);
-  total.innerText=formatoCOP(t);
-}
-
-/* ====== SOLICITAR ====== */
-async function solicitar(){
-  let u=auth.currentUser;
-
-  let m=parseFloat(monto.value);
-  let c=parseInt(cuotas.value);
-  let d=parseInt(dias.value);
-
-  if(!m||!c||!d) return alert("Completa todo");
-  if(m>100000) return alert("Máximo $100.000");
-
-  let i=m*0.20;
-  let r=d===20?8000:0;
-  let t=m+i+r;
-
-  let hoy=new Date();
-  let v=new Date();
-  v.setDate(hoy.getDate()+d);
-
-  await db.collection("prestamos").add({
-    userId:u.uid,
-    monto:m,
-    cuotas:c,
-    dias:d,
-    interes:i,
-    recargo:r,
-    total:t,
-    estado:"pendiente",
-    fecha:hoy.toISOString(),
-    fechaVencimiento:v.toISOString()
-  });
-
-  alert("Solicitud enviada");
-  cargarPrestamos(u.uid);
-}
-
-/* ====== EVENTOS ====== */
-monto.addEventListener("input",()=>{
-  if(monto.value>100000)monto.value=100000;
-  calcular();
-});
-cuotas.addEventListener("input",()=>{
-  if(cuotas.value>1)cuotas.value=1;
-});
-dias.addEventListener("change",calcular);
-
-/* ====== LOGOUT ====== */
-function logout(){
-  auth.signOut().then(()=>location.href="login.html");
+function retirar(){
+    let valor = prompt("Ingrese valor a retirar:");
+    if(valor && saldo >= valor){
+        saldo -= parseInt(valor);
+        actualizarUI();
+    } else {
+        alert("Saldo insuficiente");
+    }
 }
 </script>
 
